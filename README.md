@@ -33,7 +33,7 @@ As said before, we finally intend to **pick a panic scenario to test our model**
 
 ### Before 07/11
 - Read and understand the scientific articles related to our project.
-- Think about the project coding architecture.
+- Think about the project's coding architecture.
 
 ### Before 15/11
 - Write and drop the first report.
@@ -45,11 +45,11 @@ As said before, we finally intend to **pick a panic scenario to test our model**
 
 ### Before 10/01
 - Implement the second article.
-- Compare our results with the paper ones.
+- Compare our results with the papers' ones.
 - Start preparing the oral presentation.
-- Write final report.
+- Write the final report.
 
 ### Before 17/01
 - Train the oral presentation.
-- Shot the video for the presentation.
+- Shot the presentation's video.
 
