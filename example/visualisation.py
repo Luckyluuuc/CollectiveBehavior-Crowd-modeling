@@ -1,7 +1,7 @@
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from agents import PedestrianAgent
-from model import CrowdModel # type: ignore
+from scripts.model import CrowdModel # type: ignore
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
