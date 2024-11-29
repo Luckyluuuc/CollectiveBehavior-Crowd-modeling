@@ -41,12 +41,56 @@ def euclidean_dist(pt1, pt2):
     return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
 
 
+def pref_OEC(value):
+    """
+    To compute Pd and Pv for O E and C traits
+    """
+    seuil = 0.5
+    if value < seuil:
+        return 1 - value
+    return 0
+
+def pref_AN(value):
+    """
+    To compute Pd and Pv for A and N traits
+    """
+    seuil = 0.5
+    facteur = 2
+    if value >= seuil:
+        return facteur * value - 1
+    return 0
+
+def prefV_E(value):
+    """
+    To compute Pv for E trait
+    """
+    seuil = 0.5
+    if value >= seuil:
+        return value
+    return 0
+
+
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model, pd = 1, pv = 1):
+    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1):
         super().__init__(unique_id, model)
+        self.personality = personality
+        self.initial_pd = initial_pd
+        self.initial_pv = initial_pv
+
         self.vel0 = 1
-        self.pd = pd
-        self.pv = pv
+        self.preferences_vel_dist()
+
+    def preferences_vel_dist(self):
+        """Compute preference velocity Pv and preference distance Pd"""
+        O, C, E, A, N = (self.personality['O'], self.personality['C'],
+                         self.personality['E'], self.personality['A'],
+                         self.personality['N'])
+        
+        # Calcul de Pd
+        self.pd = pref_OEC(O) + pref_OEC(E) + pref_AN(A)
+        
+        # Calcul de Pv
+        self.pv = pref_OEC(C) + prefV_E(E) + pref_AN(N)
 
     def get_density(self, cell):
 
@@ -68,6 +112,50 @@ class PedestrianAgent(Agent):
                     density += exp(-dist/(100*ra))   # 1000 is a parameter, we'll need to tune it
 
         return density
+    
+    def update_emotions(self, cell, contagious_sources=[]):
+        """Algorithm 2, p7 : Emotion Contagion Algorithm"""
+        delta_pd = 0
+        delta_pv = 0
+
+        neighbors = self.model.grid.get_neighborhood(
+        pos=cell,
+        moore=True,      
+        include_center=False,
+        radius=1        
+        ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
+
+        # Contagion from neighbors
+        for neighbor in neighbors:
+            if isinstance(neighbor, PedestrianAgent):
+                dist = euclidean_dist(self.pos, neighbor.pos)
+                delta_pd += exp((neighbor.pd - self.pd) / dist)
+                delta_pv += exp((neighbor.pv - self.pv) / dist)
+
+        # Contagion from other sources
+        for source in contagious_sources:
+            dist = euclidean_dist(self.pos, source.pos)
+            delta_pd += exp(self.pd / dist)
+            delta_pv += exp(self.pv / dist)
+
+        # selective perception
+        dist_to_goal = euclidean_dist(self.pos, self.model.exit)
+        vel = self.vel0
+        omega_d = exp(-0.05 * dist_to_goal)
+        omega_v = exp(-2.0 * vel)
+
+        # dampening factor
+        zeta_d = self.initial_pd * 0.1
+        zeta_v = self.initial_pv * 0.1
+
+        # update of preferences
+        self.pd += delta_pd * omega_d + zeta_d
+        self.pv += delta_pv * omega_v + zeta_v
+
+        # Normalisation
+        total = self.pd + self.pv
+        self.pd /= total
+        self.pv /= total
 
     def score(self, next_cell):
         """
@@ -77,10 +165,11 @@ class PedestrianAgent(Agent):
         # We compute the distance to the exit
         dist_to_exit = euclidean_dist(next_cell, exit)
         # We compute the density of the next cell
-        density = self.get_density(next_cell)
-        
-
+        density = 1
+        #density = self.get_density(next_cell)
+        #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
+    
     
     def step(self):
 
@@ -97,6 +186,11 @@ class PedestrianAgent(Agent):
                     best_cell = cell
             
             self.model.grid.move_agent(self, best_cell)
+            for agent in self.model.schedule.agents:
+                if isinstance(agent, PedestrianAgent):
+                    contagious_sources = [fire for fire in self.model.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
+                    # Emotion contagion
+                    agent.update_emotions(agent.pos, contagious_sources) 
 
     
 

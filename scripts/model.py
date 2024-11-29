@@ -6,9 +6,17 @@ from mesa.time import RandomActivation
 
 from agents import PedestrianAgent
 from obstacle import Obstacle
+from random import gauss
+from firesource import FireSource
+from math import sqrt
+
+
+def euclidean_dist(pt1, pt2):
+    """ Return euclidean distance between two points """
+    return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
 
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos):
+    def __init__(self, n_agents, width, height, obstacles, exit_pos, fire_sources):
         super().__init__(seed=42)
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
 
@@ -21,18 +29,32 @@ class CrowdModel(Model):
         self.schedule = RandomActivation(self)
         self.exit = exit_pos  # Position(s) of the exit(s)
 
+         # Fill the grid with some fire sources
+        self.fire_sources = []  # List to stock them
+        for i, pos in enumerate(fire_sources):
+            fire = FireSource(i + 1000, self, pos)
+            self.grid.place_agent(fire, pos)
+            self.fire_sources.append(fire)  
+
         # Create agents only on empty cells
         empty_cells = [(x, y) for x in range(self.grid.width) for y in range(self.grid.height) if self.grid.is_cell_empty((x, y))]
         for i in range(n_agents):
             if len(empty_cells) == 0:
                 break
-            agent = PedestrianAgent(i, self)
+            personality = {}
+            for trait in ['O', 'C', 'E', 'A', 'N']:
+                mu = self.random.uniform(0, 1)
+                sigma = self.random.uniform(-0.1, 0.1)
+                personality[trait] = gauss(mu, sigma**2)
+                #personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
+            agent = PedestrianAgent(i, self, personality)
             cell_i = random.randint(0, len(empty_cells)-1)
             self.grid.place_agent(agent, empty_cells[cell_i])
             self.schedule.add(agent)
             empty_cells.pop(cell_i)
 
     def step(self):
+
         self.schedule.step()
 
 
