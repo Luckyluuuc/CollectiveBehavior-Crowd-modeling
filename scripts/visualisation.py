@@ -6,22 +6,14 @@ from obstacle import Obstacle
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
-        if agent.unique_id == 0:
-            return {
-                "Shape": "circle",
-                "Filled": "true",
-                "r": 1,
-                "Color": "red",
-                "Layer": 0,
-            }
-        else:
-            return {
-                "Shape": "circle",
-                "Filled": "true",
-                "r": 1,
-                "Color": "blue",
-                "Layer": 0,
-            }
+        color = ["red", "blue", "green", "yellow", "purple", "orange", "brown", "black"]
+        return {
+            "Shape": "circle",
+            "Filled": "true",
+            "r": 0.5,
+            "Color": color[agent.unique_id % len(color)],
+            "Layer": 0,
+        }
     return {}
 
 def grid_portrayal(model):

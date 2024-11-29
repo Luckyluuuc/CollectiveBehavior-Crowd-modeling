@@ -49,8 +49,25 @@ class PedestrianAgent(Agent):
         self.pv = pv
 
     def get_density(self, cell):
-        # TODO implement this function
-        return 1
+
+        density = 0
+        ra = 2 # parameter to tune
+
+        neighbors = self.model.grid.get_neighborhood(
+        pos=cell,
+        moore=True,      
+        include_center=False,
+        radius=1 #change the value here        
+        ) 
+
+        for neighbor_pos in neighbors:
+            neigh_contents = self.model.grid.get_cell_list_contents(neighbor_pos)
+            for agent in neigh_contents:
+                if isinstance(agent, PedestrianAgent):
+                    dist = euclidean_dist(cell, agent.pos)
+                    density += exp(-dist/(100*ra))   # 1000 is a parameter, we'll need to tune it
+
+        return density
 
     def score(self, next_cell):
         """
