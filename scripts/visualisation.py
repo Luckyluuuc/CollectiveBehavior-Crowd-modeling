@@ -5,11 +5,12 @@ from model import CrowdModel # type: ignore
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
+        color = ["red", "blue", "green", "yellow", "purple", "orange", "brown", "black"]
         return {
             "Shape": "circle",
             "Filled": "true",
             "r": 0.5,
-            "Color": "blue",
+            "Color": color[agent.unique_id % len(color)],
             "Layer": 0,
         }
     return {}
