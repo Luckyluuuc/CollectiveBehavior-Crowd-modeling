@@ -40,43 +40,45 @@ def euclidean_dist(pt1, pt2):
 
 
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, pd = 1, pv = 1):
         super().__init__(unique_id, model)
         self.vel0 = 1
-        self.pd = 1
-        self.pv = 1
+        self.pd = pd
+        self.pv = pv
+
+    def get_density(self, cell):
+        # TODO implement this function
+        return 1
 
     def score(self, next_cell):
         """
         Compute the satisfaction score considering the agent moving on the next_cell.
         """
-
-        grid = self.model.grid
-        
-        # Don't want to go on an already occupied cell
-        if grid.get_cell_list_contents(self.pos):
-            return -1
-        
         exit = self.model.exit
+        # We compute the distance to the exit
+        dist_to_exit = euclidean_dist(next_cell, exit)
+        # We compute the density of the next cell
+        density = self.get_density(next_cell)
+        
 
-        # Euclidean distance
-        dist_exit = euclidean_dist(exit, next_cell)
+        return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
+    
+    def step(self):
 
-        # TO IMPROVE : changer la valeur de radius (distance à laquelle on considère les voisins)
-        # Get all the neighbors of the observed cell
-        neighbors = grid.get_neighborhood(
-        next_cell,
-        moore=True, # Do not consider diagonals
-        include_center=False,
-        radius=3) # Consider cell that are far by 3 cells of next_cell
-
-        density = 0
-        for cell in neighbors:
-            nb_occupants = sum(1 for object in grid.get_cell_list_contents(cell) if isinstance(object, PedestrianAgent))
+        if self.pos == self.model.exit_pos:
+            self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
+            self.model.schedule.remove(self)
+        else:
+            min_score = float('inf')
+            best_cell = None
+            for cell in get_cells_around(self.model.grid, self.pos):
+                score = self.score(cell)
+                if score < min_score:
+                    min_score = score
+                    best_cell = cell
             
-            # The further the cell is from next_cell, the less its density will impact next_cell density
-            density += nb_occupants / euclidean_dist(cell, next_cell)  # non-zero thanks to second function line
+            self.model.grid.move_agent(self, best_cell)
 
-        # Scoring function extracted from the scientific paper
-        return (dist_exit/self.vel0) * exp((density * (self.pv + 1) / (self.pd + 1))**2)
+    
+
 
