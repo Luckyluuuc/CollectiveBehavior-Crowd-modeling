@@ -14,15 +14,17 @@ def agent_portrayal(agent):
             "Color": color[agent.unique_id % len(color)],
             "Layer": 0,
         }
+    
+    if isinstance(agent, Obstacle):
+        return {
+            "Shape": "circle",
+            "Filled": "true",
+            "r": 1,
+            "Color": "grey",
+            "Layer": 0,
+        }
     return {}
 
-def grid_portrayal(model):
-    portrayal = {}
-    for cell in model.grid.coord_iter():
-        (content, x, y) = cell
-        if (x, y) == model.exit_pos:
-            portrayal[(x, y)] = {"Shape": "rect", "w": 1, "h": 1, "Color": "green", "Layer": 1}
-    return portrayal
 
 
 def run_visualisation():
@@ -36,7 +38,7 @@ def run_visualisation():
         CrowdModel,
         [grid],
         "Simulation de Foule",
-        {"n_agents": 80, "width": 40, "height": 40, "obstacles": [], "exit_pos": (0,0)},
+        {"n_agents": 80, "width": 40, "height": 40, "obstacles": [(20,30)], "exit_pos": (0,0)},
     )
     server.port = 8521
     server.launch()
