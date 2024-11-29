@@ -65,7 +65,7 @@ class PedestrianAgent(Agent):
     
     def step(self):
 
-        if self.pos == self.model.exit_pos:
+        if self.pos == self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
         else:
