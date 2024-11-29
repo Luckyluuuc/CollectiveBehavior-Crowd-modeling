@@ -2,16 +2,26 @@ from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from agents import PedestrianAgent
 from model import CrowdModel # type: ignore
+from obstacle import Obstacle
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
-        return {
-            "Shape": "circle",
-            "Filled": "true",
-            "r": 0.5,
-            "Color": "blue",
-            "Layer": 0,
-        }
+        if agent.unique_id == 0:
+            return {
+                "Shape": "circle",
+                "Filled": "true",
+                "r": 1,
+                "Color": "red",
+                "Layer": 0,
+            }
+        else:
+            return {
+                "Shape": "circle",
+                "Filled": "true",
+                "r": 1,
+                "Color": "blue",
+                "Layer": 0,
+            }
     return {}
 
 def grid_portrayal(model):
@@ -24,7 +34,10 @@ def grid_portrayal(model):
 
 
 def run_visualisation():
-    """Lance le serveur de visualisation."""
+    """
+    Lance le serveur de visualisation.
+    TODO : Print les obstacles sur la grille.
+    """
     grid = CanvasGrid(agent_portrayal, 40, 40, 1000, 1000)
 
     server = ModularServer(
