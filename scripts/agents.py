@@ -10,7 +10,8 @@ def get_cells_around(grid:MultiGrid, loc):
     We consider (in first approximation) that the scoring function is enought to
     sort the neighbors and keep only the relevant ones.
 
-    TO IMPROVE : prendre en compte la distance à l'arrivée (?)
+    TO IMPROVE : prendre en compte la distance à l'arrivée (= remove ceux qui nous font reculer)
+    On suppose pour l'instant que la fonction de scoring est suffisante pour cela.
     """
 
     # TO IMPROVE : Take diagonals into consideration
@@ -24,13 +25,14 @@ def get_cells_around(grid:MultiGrid, loc):
         if grid.out_of_bounds(neighbor):
             continue
         
-        # Insures the neighbor is not an Obstacle
-        neigh_contents = grid.get_cell_list_contents(neighbor)
-        if any(isinstance(agent, Obstacle) for agent in neigh_contents):
+        # Insures the neighbor is not an Obstacle or an Agent
+        if not grid.is_cell_empty(neighbor):
             continue
         
         valid_neighbors.append(neighbor)
 
+    valid_neighbors.append(loc)
+    
     return valid_neighbors
 
 
