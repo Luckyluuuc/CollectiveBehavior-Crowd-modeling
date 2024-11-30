@@ -57,18 +57,18 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation():
+def run_visualisation(nb_agents=80, width=40, height=40, obstacles=[], exit_pos=(0,0), fire_sources=[]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
     """
-    grid = CanvasGrid(agent_portrayal, 40, 40, 1000, 1000)
+    grid = CanvasGrid(agent_portrayal, width, height, 1000, 1000)
 
     server = ModularServer(
         CrowdModel,
         [grid],
         "Simulation de Foule",
-        {"n_agents": 80, "width": 40, "height": 40, "obstacles": [(20,30)], "exit_pos": (0,0), "fire_sources" : [(5,5), (20,25)]},
+        {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos, "fire_sources" : fire_sources},
     )
     server.port = 8521
     server.launch()
