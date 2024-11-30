@@ -3,38 +3,6 @@ from mesa.space import MultiGrid
 from obstacle import Obstacle
 from math import sqrt, exp
 
-def get_cells_around(grid:MultiGrid, loc):
-    """
-    Return the list of cell we consider as potential new destination for the next step.
-
-    We consider (in first approximation) that the scoring function is enought to
-    sort the neighbors and keep only the relevant ones.
-
-    TO IMPROVE : prendre en compte la distance à l'arrivée (= remove ceux qui nous font reculer)
-    On suppose pour l'instant que la fonction de scoring est suffisante pour cela.
-    """
-
-    # TO IMPROVE : Take diagonals into consideration
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    valid_neighbors = []
-
-    for dir in directions:
-        neighbor = (loc[0] + dir[0], loc[1] + dir[1])
-
-        # Insures the neighbor is part of the grid
-        if grid.out_of_bounds(neighbor):
-            continue
-        
-        # Insures the neighbor is not an Obstacle or an Agent
-        if not grid.is_cell_empty(neighbor):
-            continue
-        
-        valid_neighbors.append(neighbor)
-
-    valid_neighbors.append(loc)
-    
-    return valid_neighbors
-
 
 def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
@@ -77,7 +45,7 @@ class PedestrianAgent(Agent):
         self.initial_pd = initial_pd
         self.initial_pv = initial_pv
 
-        self.vel0 = 1
+        self.vel0 = 1   # should belong to {1, 2, 3}
         self.preferences_vel_dist()
 
     def preferences_vel_dist(self):
@@ -92,7 +60,50 @@ class PedestrianAgent(Agent):
         # Calcul de Pv
         self.pv = pref_OEC(C) + prefV_E(E) + pref_AN(N)
 
+
+    def get_cells_around(self):
+        """
+        Return the list of cell we consider as potential new destination for the next step.
+
+        We consider (in first approximation) that the scoring function is enought to
+        sort the neighbors and keep only the relevant ones.
+
+        TO IMPROVE : prendre en compte la distance à l'arrivée (= remove ceux qui nous font reculer)
+        On suppose pour l'instant que la fonction de scoring est suffisante pour cela.
+        """
+        grid = self.model.grid
+        loc = self.pos
+        speed = self.vel0
+
+        directions = [(0, 1), (1,1), (1, 0), (-1,1), (-1, 0), (-1, -1), (0,-1), (1,-1)]
+        valid_neighbors = []
+
+        # For each direction, we go throught every cells our agent can reach according to its current velocity
+        # If one cell on the way is not available, we consider our agent can not go further in this way, with respect
+        # to the "one step" representation we assume
+        for dir in directions:
+            for i in range(1, speed+1):
+                neighbor = (loc[0] + i*dir[0], loc[1] + i*dir[1])
+
+                # Insures the neighbor is part of the grid
+                if grid.out_of_bounds(neighbor):
+                    break
+                
+                # Insures the neighbor is not an Obstacle or an Agent
+                if not grid.is_cell_empty(neighbor):
+                    break
+                
+                valid_neighbors.append(neighbor)
+
+        valid_neighbors.append(loc)
+
+        return valid_neighbors
+
+
     def get_density(self, cell):
+        """
+        Luc kind of things
+        """
 
         density = 0
         ra = 2 # parameter to tune
@@ -179,7 +190,7 @@ class PedestrianAgent(Agent):
         else:
             min_score = float('inf')
             best_cell = None
-            for cell in get_cells_around(self.model.grid, self.pos):
+            for cell in self.get_cells_around():
                 score = self.score(cell)
                 if score < min_score:
                     min_score = score
