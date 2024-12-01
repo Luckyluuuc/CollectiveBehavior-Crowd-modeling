@@ -3,6 +3,7 @@ from mesa.visualization.ModularVisualization import ModularServer
 from agents import PedestrianAgent
 from model import CrowdModel # type: ignore
 from obstacle import Obstacle
+from trajectory import Trajectory
 from firesource import FireSource
 
 def highest_trait(agent):
@@ -52,6 +53,17 @@ def agent_portrayal(agent):
             "r": 1.5,
             "Color": "red",
             "Layer": 0,
+        }
+    
+    if isinstance(agent, Trajectory):
+        colors = ["black", "blue", "green", "yellow", "purple", "orange", "brown", "black"]
+
+        return {
+            "Shape": "circle",
+            "Filled": "false",
+            "r": 0.1,
+            "Color": colors[agent.agent_id % len(colors)],
+            "Layer": 1  ,
         }
     return {}
 

@@ -45,7 +45,7 @@ class PedestrianAgent(Agent):
         self.initial_pd = initial_pd
         self.initial_pv = initial_pv
 
-        self.vel0 = 1   # should belong to {1, 2, 3}
+        self.vel0 = 3  # should belong to {1, 2, 3}
         self.preferences_vel_dist()
 
     def preferences_vel_dist(self):
@@ -81,6 +81,7 @@ class PedestrianAgent(Agent):
         # For each direction, we go throught every cells our agent can reach according to its current velocity
         # If one cell on the way is not available, we consider our agent can not go further in this way, with respect
         # to the "one step" representation we assume
+
         for dir in directions:
             for i in range(1, speed+1):
                 neighbor = (loc[0] + i*dir[0], loc[1] + i*dir[1])
@@ -122,7 +123,7 @@ class PedestrianAgent(Agent):
                     dist = euclidean_dist(cell, agent.pos)
                     density += exp(-dist/(100*ra))   # 1000 is a parameter, we'll need to tune it
 
-        return density
+        return 1 # density
     
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
@@ -196,7 +197,19 @@ class PedestrianAgent(Agent):
                     min_score = score
                     best_cell = cell
             
+            previous_cell = self.pos
             self.model.grid.move_agent(self, best_cell)
+
+            # Add a trajectory to the grid
+            # first identify the direction
+            dir_x = int((best_cell[0] - previous_cell[0]) / max(abs(best_cell[0] - previous_cell[0]), 1)) # max to avoid division by 0
+            dir_y = int((best_cell[1] - previous_cell[1]) / max(abs(best_cell[1] - previous_cell[1]), 1))
+
+            # Add the trajectory to the grid
+            while previous_cell != best_cell:
+                self.model.add_trajectory(previous_cell, self.unique_id)
+                previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
+
             for agent in self.model.schedule.agents:
                 if isinstance(agent, PedestrianAgent):
                     contagious_sources = [fire for fire in self.model.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
