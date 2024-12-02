@@ -48,6 +48,7 @@ class CrowdModel(Model):
                 sigma = self.random.uniform(-0.1, 0.1)
                 personality[trait] = gauss(mu, sigma**2)
                 #personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
+            
             agent = PedestrianAgent(i, self, personality)
             cell_i = random.randint(0, len(empty_cells)-1)
             self.grid.place_agent(agent, empty_cells[cell_i])

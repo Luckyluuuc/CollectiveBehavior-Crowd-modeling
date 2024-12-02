@@ -39,13 +39,13 @@ def prefV_E(value):
 
 
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1):
+    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1, vel0=2):
         super().__init__(unique_id, model)
         self.personality = personality
         self.initial_pd = initial_pd
         self.initial_pv = initial_pv
 
-        self.vel0 = 3  # should belong to {1, 2, 3}
+        self.vel0 = vel0  # should belong to {1, 2, 3}
         self.preferences_vel_dist()
 
     def preferences_vel_dist(self):
@@ -121,9 +121,9 @@ class PedestrianAgent(Agent):
             for agent in neigh_contents:
                 if isinstance(agent, PedestrianAgent):
                     dist = euclidean_dist(cell, agent.pos)
-                    density += exp(-dist/(100*ra))   # 1000 is a parameter, we'll need to tune it
+                    density += exp(-dist)*100   # 1000 is a parameter, we'll need to tune it
 
-        return 1 # density
+        return  density
     
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
@@ -177,8 +177,7 @@ class PedestrianAgent(Agent):
         # We compute the distance to the exit
         dist_to_exit = euclidean_dist(next_cell, exit)
         # We compute the density of the next cell
-        density = 1
-        #density = self.get_density(next_cell)
+        density = self.get_density(next_cell)
         #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     

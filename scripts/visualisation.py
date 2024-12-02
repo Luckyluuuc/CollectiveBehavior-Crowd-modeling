@@ -32,7 +32,7 @@ def agent_portrayal(agent):
         return {
             "Shape": "circle",
             "Filled": "true",
-            "r": 0.5,
+            "r": 1.2,
             #"Color": color[agent.unique_id % len(color)],
             "Color": color_trait(agent),
             "Layer": 0,
@@ -69,7 +69,7 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=80, width=40, height=40, obstacles=[], exit_pos=(0,0), fire_sources=[]):
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=(50,0), fire_sources=[]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
@@ -82,7 +82,7 @@ def run_visualisation(nb_agents=80, width=40, height=40, obstacles=[], exit_pos=
         "Simulation de Foule",
         {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos, "fire_sources" : fire_sources},
     )
-    server.port = 8521
+    server.port = 8521  
     server.launch()
 
 if __name__ == "__main__":
