@@ -134,7 +134,7 @@ class PedestrianAgent(Agent):
         pos=cell,
         moore=True,      
         include_center=False,
-        radius=1        
+        radius=5        
         ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
 
         # Contagion from neighbors
@@ -151,7 +151,9 @@ class PedestrianAgent(Agent):
             delta_pv += exp(self.pv / dist)
 
         # selective perception
-        dist_to_goal = euclidean_dist(self.pos, self.model.exit)
+        exits = self.model.exit # now exit is a list to handle multiple exits
+        dist_to_exits = [euclidean_dist(self.pos, exit) for exit in exits]
+        dist_to_goal = min(dist_to_exits)
         vel = self.vel0
         omega_d = exp(-0.05 * dist_to_goal)
         omega_v = exp(-2.0 * vel)
@@ -173,9 +175,12 @@ class PedestrianAgent(Agent):
         """
         Compute the satisfaction score considering the agent moving on the next_cell.
         """
-        exit = self.model.exit
-        # We compute the distance to the exit
-        dist_to_exit = euclidean_dist(next_cell, exit)
+        exits = self.model.exit # now exit is a list to handle multiple exits
+        dist_to_exits = [euclidean_dist(next_cell, exit) for exit in exits]
+        dist_to_exit = min(dist_to_exits)
+
+
+
         # We compute the density of the next cell
         density = self.get_density(next_cell)
         #return (self.pd * dist_to_exit) + (self.pv * density)
@@ -184,7 +189,7 @@ class PedestrianAgent(Agent):
     
     def step(self):
 
-        if self.pos == self.model.exit:
+        if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
         else:

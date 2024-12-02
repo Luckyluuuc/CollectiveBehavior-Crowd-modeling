@@ -69,13 +69,14 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=(50,0), fire_sources=[]):
+
+
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
     """
     grid = CanvasGrid(agent_portrayal, width, height, 1000, 1000)
-
     server = ModularServer(
         CrowdModel,
         [grid],
