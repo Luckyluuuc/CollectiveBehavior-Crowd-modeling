@@ -41,15 +41,20 @@ def prefV_E(value):
 class PedestrianAgent(Agent):
     def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1):
         super().__init__(unique_id, model)
-        self.personality = personality
-        self.initial_pd = initial_pd
+        self.personality = personality  # dict whose keys ['O','C','E','A','N'] and values belong in [0;1]
+        self.initial_pd = initial_pd    
         self.initial_pv = initial_pv
 
-        self.vel0 = 1   # should belong to {1, 2, 3}
+        self.vel = (0,0)   # values required to compute the relationship matrix (cf equation 5)
+        
+        self.p = 0      # collective density (cf equation 9) TODO: revoir la valeur par défaut
+        self.neigh = -1
+
+        self.vel0 = self.random.randint(1,3)   # should belong to {1, 2, 3}
         self.preferences_vel_dist()
 
     def preferences_vel_dist(self):
-        """Compute preference velocity Pv and preference distance Pd"""
+        """Compute prefered velocity Pv and prefered distance Pd"""
         O, C, E, A, N = (self.personality['O'], self.personality['C'],
                          self.personality['E'], self.personality['A'],
                          self.personality['N'])
@@ -72,8 +77,8 @@ class PedestrianAgent(Agent):
         On suppose pour l'instant que la fonction de scoring est suffisante pour cela.
         """
         grid = self.model.grid
-        loc = self.pos
-        speed = self.vel0
+        loc = self.pos  #(x,y)
+        speed = self.vel0   #int
 
         directions = [(0, 1), (1,1), (1, 0), (-1,1), (-1, 0), (-1, -1), (0,-1), (1,-1)]
         valid_neighbors = []
@@ -104,7 +109,6 @@ class PedestrianAgent(Agent):
         """
         Luc kind of things
         """
-
         density = 0
         ra = 2 # parameter to tune
 
@@ -183,7 +187,7 @@ class PedestrianAgent(Agent):
     
     
     def step(self):
-
+        # First : make the agent move
         if self.pos == self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
@@ -196,12 +200,22 @@ class PedestrianAgent(Agent):
                     min_score = score
                     best_cell = cell
             
+            # Store current speed (needed for relationship matrix)
+            velx = abs(self.loc[0] - cell[0])
+            vely = abs(self.loc[1] - cell[1])
+            self.vel = (velx, vely)
+            
             self.model.grid.move_agent(self, best_cell)
+
             for agent in self.model.schedule.agents:
                 if isinstance(agent, PedestrianAgent):
                     contagious_sources = [fire for fire in self.model.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
                     # Emotion contagion
-                    agent.update_emotions(agent.pos, contagious_sources) 
+                    agent.update_emotions(agent.pos, contagious_sources)
+        
+        # Reset agent density (usefull for the relationship matrix part, cf modele.step())
+        self.p = 0            
+        
 
     
 
