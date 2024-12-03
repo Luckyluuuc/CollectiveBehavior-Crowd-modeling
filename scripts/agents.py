@@ -39,7 +39,7 @@ def prefV_E(value):
 
 
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1):
+    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1, vel0=2):
         super().__init__(unique_id, model)
         self.personality = personality  # dict whose keys ['O','C','E','A','N'] and values belong in [0;1]
         self.initial_pd = initial_pd    
@@ -50,7 +50,7 @@ class PedestrianAgent(Agent):
         self.p = 0      # collective density (cf equation 9) TODO: revoir la valeur par défaut
         self.neigh = -1
 
-        self.vel0 = self.random.randint(1,3)   # should belong to {1, 2, 3}
+        self.vel0 = vel0  # should belong to {1, 2, 3}
         self.preferences_vel_dist()
 
     def preferences_vel_dist(self):
@@ -86,6 +86,7 @@ class PedestrianAgent(Agent):
         # For each direction, we go throught every cells our agent can reach according to its current velocity
         # If one cell on the way is not available, we consider our agent can not go further in this way, with respect
         # to the "one step" representation we assume
+
         for dir in directions:
             for i in range(1, speed+1):
                 neighbor = (loc[0] + i*dir[0], loc[1] + i*dir[1])
@@ -124,9 +125,9 @@ class PedestrianAgent(Agent):
             for agent in neigh_contents:
                 if isinstance(agent, PedestrianAgent):
                     dist = euclidean_dist(cell, agent.pos)
-                    density += exp(-dist/(100*ra))   # 1000 is a parameter, we'll need to tune it
+                    density += exp(-dist)*100   # 1000 is a parameter, we'll need to tune it
 
-        return density
+        return  density
     
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
@@ -137,7 +138,7 @@ class PedestrianAgent(Agent):
         pos=cell,
         moore=True,      
         include_center=False,
-        radius=1        
+        radius=5        
         ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
 
         # Contagion from neighbors
@@ -154,7 +155,9 @@ class PedestrianAgent(Agent):
             delta_pv += exp(self.pv / dist)
 
         # selective perception
-        dist_to_goal = euclidean_dist(self.pos, self.model.exit)
+        exits = self.model.exit # now exit is a list to handle multiple exits
+        dist_to_exits = [euclidean_dist(self.pos, exit) for exit in exits]
+        dist_to_goal = min(dist_to_exits)
         vel = self.vel0
         omega_d = exp(-0.05 * dist_to_goal)
         omega_v = exp(-2.0 * vel)
@@ -176,19 +179,21 @@ class PedestrianAgent(Agent):
         """
         Compute the satisfaction score considering the agent moving on the next_cell.
         """
-        exit = self.model.exit
-        # We compute the distance to the exit
-        dist_to_exit = euclidean_dist(next_cell, exit)
+        exits = self.model.exit # now exit is a list to handle multiple exits
+        dist_to_exits = [euclidean_dist(next_cell, exit) for exit in exits]
+        dist_to_exit = min(dist_to_exits)
+
+
+
         # We compute the density of the next cell
-        density = 1
-        #density = self.get_density(next_cell)
+        density = self.get_density(next_cell)
         #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
     
     def step(self):
-        # First : make the agent move
-        if self.pos == self.model.exit:
+
+        if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
         else:
@@ -204,8 +209,19 @@ class PedestrianAgent(Agent):
             velx = abs(self.loc[0] - cell[0])
             vely = abs(self.loc[1] - cell[1])
             self.vel = (velx, vely)
-            
+
+            previous_cell = self.pos
             self.model.grid.move_agent(self, best_cell)
+
+            # Add a trajectory to the grid
+            # first identify the direction
+            dir_x = int((best_cell[0] - previous_cell[0]) / max(abs(best_cell[0] - previous_cell[0]), 1)) # max to avoid division by 0
+            dir_y = int((best_cell[1] - previous_cell[1]) / max(abs(best_cell[1] - previous_cell[1]), 1))
+
+            # Add the trajectory to the grid
+            while previous_cell != best_cell:
+                self.model.add_trajectory(previous_cell, self.unique_id)
+                previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
 
             for agent in self.model.schedule.agents:
                 if isinstance(agent, PedestrianAgent):

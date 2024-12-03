@@ -7,6 +7,7 @@ from mesa.time import RandomActivation
 
 from agents import PedestrianAgent
 from obstacle import Obstacle
+from trajectory import Trajectory
 from random import gauss
 from firesource import FireSource
 from math import sqrt, pi, acos, exp
@@ -72,6 +73,7 @@ class CrowdModel(Model):
 
     def step(self):
         # Make the agent move
+        self.remove_all_trajectories()
         self.schedule.step()
 
         # Algorithm 6: Emotion Contagion Algorithm
@@ -101,6 +103,31 @@ class CrowdModel(Model):
         # Get the full matrix
         self.relationship_matrix = self.relationship_matrix + self.relationship_matrix.T
         
+
+
+    def add_trajectory(self, pos, agent_id): 
+        """
+        Add a trajectory to the grid
+        """
+        trajectory = Trajectory(self, agent_id)
+        self.grid.place_agent(trajectory, pos)
+        self.schedule.add(trajectory)
+
+        assert trajectory.pos is not None, "creation of an agent without position"
+
+
+    def remove_all_trajectories(self):
+        """
+        Remove all trajectories object from the grid
+        """
+        for agent in self.schedule.agents:
+            if isinstance(agent, Trajectory) and agent.pos is not None: #TODO understand why pos is none sometimes
+                self.grid.remove_agent(agent)
+                self.schedule.remove(agent)
+        Trajectory.trajectory_counter = 0
+
+        
+
 
 
 if __name__ == "__main__":
