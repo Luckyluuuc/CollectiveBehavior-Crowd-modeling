@@ -67,7 +67,6 @@ class CrowdModel(Model):
         """
         trajectory = Trajectory(self, agent_id)
         self.grid.place_agent(trajectory, pos)
-        self.schedule.add(trajectory)
 
         assert trajectory.pos is not None, "creation of an agent without position"
 
@@ -76,10 +75,11 @@ class CrowdModel(Model):
         """
         Remove all trajectories object from the grid
         """
-        for agent in self.schedule.agents:
-            if isinstance(agent, Trajectory) and agent.pos is not None: #TODO understand why pos is none sometimes
-                self.grid.remove_agent(agent)
-                self.schedule.remove(agent)
+        for x in range(self.grid.width):
+            for y in range(self.grid.height):
+                for agent in self.grid.get_cell_list_contents((x, y)):
+                    if isinstance(agent, Trajectory): 
+                        self.grid.remove_agent(agent)
         Trajectory.trajectory_counter = 0
 
         
