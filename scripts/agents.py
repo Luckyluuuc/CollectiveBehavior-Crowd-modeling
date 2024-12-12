@@ -101,7 +101,7 @@ class PedestrianAgent(Agent):
         return valid_neighbors
 
 
-    def get_density(self, cell, alpha = 2.5, ra = 5):
+    def get_density(self, cell, alpha = 0.75, ra = 4):
         """
         Compute the density of pedestrians for a given cell.
         We consider that each neighboot in the neighboorood has it's own contribution to the density.
@@ -121,7 +121,6 @@ class PedestrianAgent(Agent):
         """
 
         density_score = 0
-        ra = 5# parameter to tune
 
         neighbors = self.model.grid.get_neighborhood(
         pos=cell,
@@ -130,17 +129,19 @@ class PedestrianAgent(Agent):
         radius=ra 
         ) 
 
-        real_density = sum([1 for agent in neighbors if isinstance(agent, PedestrianAgent)])
-        real_density = real_density / (ra**2) # mesa consider the neighborhood as a square of size ra*ra
-        real_density = real_density / 0.35**2  
-
-
+        nb_neighbors = 0
         for neighbor_pos in neighbors:
             neigh_contents = self.model.grid.get_cell_list_contents(neighbor_pos)
             for agent in neigh_contents:
                 if isinstance(agent, PedestrianAgent):
+                    nb_neighbors += 1
                     dist = euclidean_dist(cell, agent.pos)
-                    density_score += exp(-0.5 * dist**4)
+                    density_score += exp(-dist**2)
+
+        # compute the real density 
+        real_density = float(nb_neighbors)
+        real_density = real_density / len(neighbors)# (((2*ra+1)**2)-1)# mesa consider the neighborhood as a square of size ra*
+        real_density = real_density / 0.35**2  
         
         density_score =  density_score * alpha
         return density_score , real_density
@@ -189,7 +190,7 @@ class PedestrianAgent(Agent):
         self.pd /= total
         self.pv /= total
 
-    def score(self, next_cell):
+    def score(self, next_cell, density:float = None):
         """
         Compute the satisfaction score considering the agent moving on the next_cell.
         """
@@ -197,7 +198,9 @@ class PedestrianAgent(Agent):
         # We compute the distance to the exit
         dist_to_exit = euclidean_dist(next_cell, exit)
         # We compute the density of the next cell
-        density, real_density= self.get_density(next_cell)
+        if density is None: # gard rail in case there is code where density is not computed before
+            density, _ = self.get_density(next_cell)
+        
         #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
@@ -210,14 +213,19 @@ class PedestrianAgent(Agent):
         else:
             min_score = float('inf')
             best_cell = None
+            density_of_best_cell = None
             for cell in self.get_cells_around():
-                score = self.score(cell)
+                density, real_density = self.get_density(cell)
+                score = self.score(cell, density)
                 if score < min_score:
                     min_score = score
                     best_cell = cell
+                    density_of_best_cell = real_density
             
             previous_cell = self.pos
             self.model.grid.move_agent(self, best_cell)
+            if self.model.max_density_per_episode < density_of_best_cell:
+                self.model.max_density_per_episode = density_of_best_cell
 
             # Add a trajectory to the grid
             # first identify the direction
