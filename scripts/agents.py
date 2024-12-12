@@ -106,28 +106,50 @@ class PedestrianAgent(Agent):
         return valid_neighbors
 
 
-    def get_density(self, cell):
+    def get_density(self, cell, alpha = 0.75, ra = 4):
         """
-        Luc kind of things
+        Compute the density of pedestrians for a given cell.
+        We consider that each neighboot in the neighboorood has it's own contribution to the density.
+        But the further the neighboor is, the less it contributes to the density.
+
+        To model this we use the following formula :
+        contribution = exp(-0.5 * dist**4) 
+
+
+        intput :
+        - cell : tuple of int, the position of the cell
+        - alpha : float, parameter to tune for increasing or deacreasing the importance of the density
+        - ra : int, the radius of the neighborhood we consider to compute the density
+
+        output :
+        - density : float, the density of pedestrians in the neighborhood of the cell
         """
-        density = 0
-        ra = 2 # parameter to tune
+
+        density_score = 0
 
         neighbors = self.model.grid.get_neighborhood(
         pos=cell,
         moore=True,      
         include_center=False,
-        radius=1 #change the value here        
+        radius=ra 
         ) 
 
+        nb_neighbors = 0
         for neighbor_pos in neighbors:
             neigh_contents = self.model.grid.get_cell_list_contents(neighbor_pos)
             for agent in neigh_contents:
                 if isinstance(agent, PedestrianAgent):
+                    nb_neighbors += 1
                     dist = euclidean_dist(cell, agent.pos)
-                    density += exp(-dist)*100   # 1000 is a parameter, we'll need to tune it
+                    density_score += exp(-dist**2)
 
-        return  density
+        # compute the real density 
+        real_density = float(nb_neighbors)
+        real_density = real_density / len(neighbors)# (((2*ra+1)**2)-1)# mesa consider the neighborhood as a square of size ra*
+        real_density = real_density / 0.35**2  
+        
+        density_score =  density_score * alpha
+        return density_score , real_density
     
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
@@ -175,7 +197,7 @@ class PedestrianAgent(Agent):
         self.pd /= total
         self.pv /= total
 
-    def score(self, next_cell):
+    def score(self, next_cell, density:float = None):
         """
         Compute the satisfaction score considering the agent moving on the next_cell.
         """
@@ -186,7 +208,9 @@ class PedestrianAgent(Agent):
 
 
         # We compute the density of the next cell
-        density = self.get_density(next_cell)
+        if density is None: # gard rail in case there is code where density is not computed before
+            density, _ = self.get_density(next_cell)
+        
         #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
@@ -199,11 +223,14 @@ class PedestrianAgent(Agent):
         else:
             min_score = float('inf')
             best_cell = None
+            density_of_best_cell = None
             for cell in self.get_cells_around():
-                score = self.score(cell)
+                density, real_density = self.get_density(cell)
+                score = self.score(cell, density)
                 if score < min_score:
                     min_score = score
                     best_cell = cell
+                    density_of_best_cell = real_density
             
             # Store current speed (needed for relationship matrix)
             velx = abs(self.loc[0] - cell[0])
@@ -212,6 +239,8 @@ class PedestrianAgent(Agent):
 
             previous_cell = self.pos
             self.model.grid.move_agent(self, best_cell)
+            if self.model.max_density_per_episode < density_of_best_cell:
+                self.model.max_density_per_episode = density_of_best_cell
 
             # Add a trajectory to the grid
             # first identify the direction

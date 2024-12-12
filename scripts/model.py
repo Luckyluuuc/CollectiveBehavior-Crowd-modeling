@@ -35,6 +35,7 @@ class CrowdModel(Model):
 
         self.schedule = RandomActivation(self)
         self.exit = exit_pos  # Position(s) of the exit(s)
+        self.max_density_per_episode = 0 
 
         # Fill the grid with some fire sources
         self.fire_sources = []  # List to stock them
@@ -74,7 +75,10 @@ class CrowdModel(Model):
     def step(self):
         # Make the agent move
         self.remove_all_trajectories()
+        self.max_density_per_episode = 0
         self.schedule.step()
+        print("Max density per episode: ", self.max_density_per_episode)
+        
 
         # Algorithm 6: Emotion Contagion Algorithm
         # Update relationship matrix
