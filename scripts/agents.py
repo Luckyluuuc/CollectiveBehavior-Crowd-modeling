@@ -249,10 +249,9 @@ class PedestrianAgent(Agent):
             dir_y = int((best_cell[1] - previous_cell[1]) / max(abs(best_cell[1] - previous_cell[1]), 1))
 
             # Add the trajectory to the grid
-            if 0:
-                while previous_cell != best_cell:
-                    self.model.add_trajectory(previous_cell, self.unique_id)
-                    previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
+            while previous_cell != best_cell:
+                self.model.add_trajectory(previous_cell, self.unique_id)
+                previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
 
             # Emotion contagion
             for agent in self.model.schedule.agents:
