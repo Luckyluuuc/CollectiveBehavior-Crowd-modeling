@@ -48,7 +48,7 @@ class PedestrianAgent(Agent):
         self.vel = (0,0)   # values required to compute the relationship matrix (cf equation 5)
         
         self.p = 0      # collective density (cf equation 9) TODO: revoir la valeur par défaut
-        self.neigh = -1
+        self.neigh = unique_id
 
         self.vel0 = vel0  # should belong to {1, 2, 3}
         self.preferences_vel_dist()
@@ -156,19 +156,26 @@ class PedestrianAgent(Agent):
         delta_pd = 0
         delta_pv = 0
 
-        neighbors = self.model.grid.get_neighborhood(
-        pos=cell,
-        moore=True,      
-        include_center=False,
-        radius=5        
-        ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
+        if 0:
+            neighbors = self.model.grid.get_neighborhood(
+            pos=cell,
+            moore=True,      
+            include_center=False,
+            radius=5        
+            ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
+
+        neighbors = self.model.clusters[self.neigh]
 
         # Contagion from neighbors
         for neighbor in neighbors:
-            if isinstance(neighbor, PedestrianAgent):
-                dist = euclidean_dist(self.pos, neighbor.pos)
-                delta_pd += exp((neighbor.pd - self.pd) / dist)
-                delta_pv += exp((neighbor.pv - self.pv) / dist)
+            # if isinstance(neighbor, PedestrianAgent):
+            if neighbor.unique_id != self.unique_id:
+                try :
+                    dist = euclidean_dist(self.pos, neighbor.pos)
+                    delta_pd += exp((neighbor.pd - self.pd) / dist)
+                    delta_pv += exp((neighbor.pv - self.pv) / dist)
+                except TypeError:
+                    print(neighbors)
 
         # Contagion from other sources
         for source in contagious_sources:
