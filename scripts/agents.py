@@ -2,7 +2,7 @@ from mesa import Agent
 from mesa.space import MultiGrid
 from obstacle import Obstacle
 from math import sqrt, exp
-
+import numpy as np
 
 def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
@@ -196,6 +196,7 @@ class PedestrianAgent(Agent):
         if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
+
         else:
             min_score = float('inf')
             best_cell = None
@@ -204,10 +205,10 @@ class PedestrianAgent(Agent):
                 if score < min_score:
                     min_score = score
                     best_cell = cell
-            
+
             # Store current speed (needed for relationship matrix)
-            velx = abs(self.loc[0] - cell[0])
-            vely = abs(self.loc[1] - cell[1])
+            velx = abs(self.pos[0] - best_cell[0])
+            vely = abs(self.pos[1] - best_cell[1])
             self.vel = (velx, vely)
 
             previous_cell = self.pos
@@ -219,14 +220,15 @@ class PedestrianAgent(Agent):
             dir_y = int((best_cell[1] - previous_cell[1]) / max(abs(best_cell[1] - previous_cell[1]), 1))
 
             # Add the trajectory to the grid
-            while previous_cell != best_cell:
-                self.model.add_trajectory(previous_cell, self.unique_id)
-                previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
+            if 0:
+                while previous_cell != best_cell:
+                    self.model.add_trajectory(previous_cell, self.unique_id)
+                    previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
 
+            # Emotion contagion
             for agent in self.model.schedule.agents:
                 if isinstance(agent, PedestrianAgent):
                     contagious_sources = [fire for fire in self.model.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
-                    # Emotion contagion
                     agent.update_emotions(agent.pos, contagious_sources)
         
         # Reset agent density (usefull for the relationship matrix part, cf modele.step())

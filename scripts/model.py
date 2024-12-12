@@ -10,7 +10,7 @@ from obstacle import Obstacle
 from trajectory import Trajectory
 from random import gauss
 from firesource import FireSource
-from math import sqrt, pi, acos, exp
+from math import sqrt, pi, exp
 
 
 def euclidean_dist(pt1, pt2):
@@ -23,7 +23,7 @@ class CrowdModel(Model):
         super().__init__(seed=42)
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
 
-        self.relationship_matrix = np.identity(n_agents) # cf. Algorithm 6: Emotion Contagion Model
+        self.relationship_matrix = np.zeros((n_agents, n_agents)) # cf. Algorithm 6: Emotion Contagion Model
         self.cutxy = 50
         self.cutori = pi/3
 
@@ -71,39 +71,99 @@ class CrowdModel(Model):
         return 1 + exp(-(dori/self.cutori)**2)
 
 
+    def update_relationships(self):
+        """
+        Algorithm 6: Emotion Contagion Algorithm
+        Update neighbors and density via relationship matrix (not explicitely written)
+        """
+        agents = list(self.schedule.agents)
+
+        # Reset the relationships
+        print("DOUDOU:", np.shape(self.relationship_matrix))
+        self.relationship_matrix = np.zeros_like(self.relationship_matrix)
+
+        # Compute only the upper triangular part of the matrix (as it is symmetric)
+        # In parallel, compute the density of each agent
+        for i in range(len(agents)):
+            agent1 = agents[i]
+
+            for j in range(i+1, len(agents)):
+                agent2 = agents[j]
+
+                # Compute relative distances and velocities
+                dxy = euclidean_dist(agent1.pos, agent2.pos)
+                dori = euclidean_dist(np.arccos(agent1.vel), np.arccos(agent2.vel))
+
+                # Case where there is a relation between the two agents
+                if (dxy < self.cutxy * self.theta(dori)):
+                    # Relationship matrix is filled with distances to then compute neighbors easily
+                    self.relationship_matrix[agent1.unique_id, agent2.unique_id] = dxy
+
+                    # Work on the assumption that agent densities are reset during step phase
+                    agent1.p += 1
+                    agent2.p += 1
+
+        # Get the full matrix
+        self.relationship_matrix = self.relationship_matrix + self.relationship_matrix.T
+
+
+    def coll_clustering_algo(self):
+        """
+        Algorithm 1: Collective Clustering Algorithm
+        """
+        # Initialize cluster center
+        # Agent's index is supposed to correspond with its unique id (cf initialization)
+        agents = {agent.unique_id: agent for agent in self.schedule.agents}
+
+        sorted_agents_id_density = sorted(agents.values(), key=lambda agent : agent.p)
+
+        # Cluster initialization
+        clusters = {agent_id: -1 for agent_id in (agents.keys())}
+        highest_density_agent = sorted_agents_id_density[0] 
+        clusters[highest_density_agent.unique_id] = highest_density_agent.unique_id
+
+        for i in range(1, len(sorted_agents_id_density)):
+            # Get agents in increasing density order
+            agent = sorted_agents_id_density[i]
+
+            # Get the agent with the closest distance to our current agent (avoiding the zeros distances)
+            relation_dists = self.relationship_matrix[agent.unique_id]
+            non_zero_dist = np.nonzero(relation_dists)[0]
+            
+            if len(non_zero_dist) == 0: # all distances are = 0 which means no relation at all
+                clusters[agent.unique_id] = [agent.unique_id]
+
+            else:
+                closest_agent_id = non_zero_dist[np.argmin(relation_dists[non_zero_dist])]
+            
+                # Relationship and distance have already been compared, only lacks the density to assess the neighbooring
+                if agents[closest_agent_id].p > agent.p:
+                    clusters[agent.unique_id] = clusters[closest_agent_id]
+                else:
+                    clusters[agent.unique_id] = [agent.unique_id]
+
+
+                
+
+            # Solve cluster(i) = cluster(neighbor) si j'ai un neibhor
+                            #    = moi sinon
+            # J'ai un neighbor si il existe un agent /
+            # - Cet agent est l'agent le plus proche de moi
+            # - Sa densité est supérieure à la mienne
+            # - Cet agent et moi même sommes en relationship
+
+
     def step(self):
         # Make the agent move
         self.remove_all_trajectories()
         self.schedule.step()
 
-        # Algorithm 6: Emotion Contagion Algorithm
-        # Update relationship matrix
-        agents = list(self.schedule.agents)
+        # Fill relationship matrix with distances from each relation
+        self.update_relationships()
 
-        # Compute only the upper triangular part of the matrix (as it is symmetric)
-        # In parallel, compute the density of each agent
-        for i in range(len(agents)):
-            for j in range(i+1, len(agents)):
-                agent1 = agents[i]
-                agent2 = agents[j]
-
-                # Compute relative distances and velocities
-                dxy = euclidean_dist(agent1.loc, agent2.loc)
-                dori = abs(acos(agent1.vel) - acos(agent2.vel))
-
-                # Compute the relation between the two agents according to dxy and dori
-                relation = 1 if (dxy < self.cutxy * self.theta(dori)) else 0
-
-                self.relationship_matrix[agent1.unique_id, agent2.unique_id] = relation
-
-                # Work on the assumption that agent densities are reset during step phase
-                agent1.p += relation
-                agent2.p += relation
-
-        # Get the full matrix
-        self.relationship_matrix = self.relationship_matrix + self.relationship_matrix.T
+        # Update the clusters based on closest neighbor 
+        self.coll_clustering_algo()
         
-
 
     def add_trajectory(self, pos, agent_id): 
         """
