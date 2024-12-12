@@ -35,6 +35,7 @@ class CrowdModel(Model):
 
         self.schedule = RandomActivation(self)
         self.exit = exit_pos  # Position(s) of the exit(s)
+        self.max_density_per_episode = 0 
 
         # Fill the grid with some fire sources
         self.fire_sources = []  # List to stock them
@@ -156,7 +157,10 @@ class CrowdModel(Model):
     def step(self):
         # Make the agent move
         self.remove_all_trajectories()
+        self.max_density_per_episode = 0
         self.schedule.step()
+        print("Max density per episode: ", self.max_density_per_episode)
+        
 
         # Fill relationship matrix with distances from each relation
         self.update_relationships()
@@ -171,7 +175,6 @@ class CrowdModel(Model):
         """
         trajectory = Trajectory(self, agent_id)
         self.grid.place_agent(trajectory, pos)
-        self.schedule.add(trajectory)
 
         assert trajectory.pos is not None, "creation of an agent without position"
 
@@ -180,10 +183,11 @@ class CrowdModel(Model):
         """
         Remove all trajectories object from the grid
         """
-        for agent in self.schedule.agents:
-            if isinstance(agent, Trajectory) and agent.pos is not None: #TODO understand why pos is none sometimes
-                self.grid.remove_agent(agent)
-                self.schedule.remove(agent)
+        for x in range(self.grid.width):
+            for y in range(self.grid.height):
+                for agent in self.grid.get_cell_list_contents((x, y)):
+                    if isinstance(agent, Trajectory): 
+                        self.grid.remove_agent(agent)
         Trajectory.trajectory_counter = 0
 
         
