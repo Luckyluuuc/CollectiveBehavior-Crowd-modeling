@@ -24,6 +24,7 @@ class CrowdModel(Model):
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
 
         self.relationship_matrix = np.zeros((n_agents, n_agents)) # cf. Algorithm 6: Emotion Contagion Model
+        self.clusters = {}  # keys are cluster ids, values are agents who are part of the cluster
         self.cutxy = 50
         self.cutori = pi/3
 
@@ -59,6 +60,7 @@ class CrowdModel(Model):
             cell_i = random.randint(0, len(empty_cells)-1)
             self.grid.place_agent(agent, empty_cells[cell_i])
             self.schedule.add(agent)
+            self.clusters[i] = [agent]
             empty_cells.pop(cell_i)
 
 
@@ -80,7 +82,6 @@ class CrowdModel(Model):
         agents = list(self.schedule.agents)
 
         # Reset the relationships
-        print("DOUDOU:", np.shape(self.relationship_matrix))
         self.relationship_matrix = np.zeros_like(self.relationship_matrix)
 
         # Compute only the upper triangular part of the matrix (as it is symmetric)
@@ -116,42 +117,41 @@ class CrowdModel(Model):
         # Agent's index is supposed to correspond with its unique id (cf initialization)
         agents = {agent.unique_id: agent for agent in self.schedule.agents}
 
-        sorted_agents_id_density = sorted(agents.values(), key=lambda agent : agent.p)
+        sorted_agents_density = sorted(agents.values(), key=lambda agent : agent.p, reverse=True)
 
-        # Cluster initialization
-        clusters = {agent_id: -1 for agent_id in (agents.keys())}
-        highest_density_agent = sorted_agents_id_density[0] 
-        clusters[highest_density_agent.unique_id] = highest_density_agent.unique_id
+        # Cluster initialization with the densest agent
+        self.clusters = {}
+        highest_density_agent = sorted_agents_density[0] 
+        self.clusters[highest_density_agent.unique_id] = [highest_density_agent]
+        highest_density_agent.neigh = highest_density_agent.unique_id
 
-        for i in range(1, len(sorted_agents_id_density)):
+        for i in range(1, len(sorted_agents_density)):
             # Get agents in increasing density order
-            agent = sorted_agents_id_density[i]
+            agent = sorted_agents_density[i]
 
             # Get the agent with the closest distance to our current agent (avoiding the zeros distances)
             relation_dists = self.relationship_matrix[agent.unique_id]
             non_zero_dist = np.nonzero(relation_dists)[0]
             
             if len(non_zero_dist) == 0: # all distances are = 0 which means no relation at all
-                clusters[agent.unique_id] = [agent.unique_id]
+                self.clusters[agent.unique_id] = [agent]
+                agent.neigh = agent.unique_id
 
             else:
                 closest_agent_id = non_zero_dist[np.argmin(relation_dists[non_zero_dist])]
-            
-                # Relationship and distance have already been compared, only lacks the density to assess the neighbooring
-                if agents[closest_agent_id].p > agent.p:
-                    clusters[agent.unique_id] = clusters[closest_agent_id]
+                closest_agent = agents[closest_agent_id]
+
+                # Relationship and distance have already been compared in the relationships matrix update
+                # only lacks the density to assess the neighbooring
+                if closest_agent.p > agent.p:
+                    # The density of the closest agent is higher also means it has already been treated by the algorithm
+                    # Thus, its neigh value should be accurate
+                    self.clusters[closest_agent.neigh].append(agent)
+                    agent.neigh = closest_agent.neigh
+
                 else:
-                    clusters[agent.unique_id] = [agent.unique_id]
-
-
-                
-
-            # Solve cluster(i) = cluster(neighbor) si j'ai un neibhor
-                            #    = moi sinon
-            # J'ai un neighbor si il existe un agent /
-            # - Cet agent est l'agent le plus proche de moi
-            # - Sa densité est supérieure à la mienne
-            # - Cet agent et moi même sommes en relationship
+                    self.clusters[agent.unique_id] = [agent]
+                    agent.neigh = agent.unique_id
 
 
     def step(self):
