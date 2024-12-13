@@ -4,6 +4,12 @@ from obstacle import Obstacle
 from math import sqrt, exp
 
 
+# for the fuzzy logic
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+
+
 def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
     return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
@@ -46,7 +52,7 @@ class PedestrianAgent(Agent):
         self.initial_pv = initial_pv
 
         self.vel0 = vel0  # should belong to {1, 2, 3}
-        self.preferences_vel_dist()
+        self.fuzzy_preferences_vel_dist()
 
     def preferences_vel_dist(self):
         """Compute preference velocity Pv and preference distance Pd"""
@@ -59,6 +65,96 @@ class PedestrianAgent(Agent):
         
         # Calcul de Pv
         self.pv = pref_OEC(C) + prefV_E(E) + pref_AN(N)
+
+
+
+    def fuzzy_preferences_vel_dist(self):
+        """
+        Calcule les propensions P_d (désobéissance) et P_v (marche rapide) à partir des scores OCEAN.
+
+        Args:
+            ocean_scores (dict): Dictionnaire contenant les scores OCEAN sous la forme :
+                {
+                    'O': float,  # Ouverture (0 à 1)
+                    'C': float,  # Conscience (0 à 1)
+                    'E': float,  # Extraversion (0 à 1)
+                    'A': float,  # Agréabilité (0 à 1)
+                    'N': float   # Névrosisme (0 à 1)
+                }
+
+        Returns:
+            tuple: (P_d, P_v), où :
+                - P_d est la propension à désobéir (float)
+                - P_v est la propension à marcher vite (float)
+        """
+        # Étape 1 : Définir les variables d'entrée floues (O, E, A, C, N)
+        psi_O = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_O')  # Ouverture
+        psi_E = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_E')  # Extraversion
+        psi_A = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_A')  # Agréabilité
+        psi_C = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_C')  # Conscience
+        psi_N = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_N')  # Névrosisme
+
+        # Étape 2 : Définir les variables de sortie floues (P_d et P_v)
+        P_d = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_d')  # Propension à désobéir
+        P_v = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_v')  # Propension à marcher vite
+
+        # Étape 3 : Définir les ensembles flous pour chaque variable
+        for var in [psi_O, psi_E, psi_A, psi_C, psi_N]:
+            var['low'] = fuzz.trapmf(var.universe, [0, 0, 0.25, 0.5])  # Faible
+            var['high'] = fuzz.trapmf(var.universe, [0.5, 0.75, 1, 1])  # Élevé
+
+        P_d['low'] = fuzz.trapmf(P_d.universe, [0, 0, 1, 1.5])
+        P_d['medium'] = fuzz.trapmf(P_d.universe, [1, 1.5, 2, 2.5])
+        P_d['high'] = fuzz.trapmf(P_d.universe, [2, 2.5, 3, 3])
+
+        P_v['low'] = fuzz.trapmf(P_v.universe, [0, 0, 1, 1.5])
+        P_v['medium'] = fuzz.trapmf(P_v.universe, [1, 1.5, 2, 2.5])
+        P_v['high'] = fuzz.trapmf(P_v.universe, [2, 2.5, 3, 3])
+
+        # Étape 4 : Définir les règles floues
+        rule1_pd = ctrl.Rule(psi_O['low'] & psi_E['low'], P_d['high'])  # Faible O et E -> P_d élevé
+        rule2_pd = ctrl.Rule(psi_A['high'], P_d['low'])  # A élevé -> P_d faible
+
+        rule1_pv = ctrl.Rule(psi_C['low'], P_v['high'])  # C faible -> P_v élevé
+        rule2_pv = ctrl.Rule(psi_N['high'] & psi_E['high'], P_v['medium'])  # N et E élevés -> P_v moyen
+
+        # Étape 5 : Créer les systèmes de contrôle flous
+        pd_ctrl = ctrl.ControlSystem([rule1_pd, rule2_pd])
+        pv_ctrl = ctrl.ControlSystem([rule1_pv, rule2_pv])
+
+        pd_sim = ctrl.ControlSystemSimulation(pd_ctrl)
+        pv_sim = ctrl.ControlSystemSimulation(pv_ctrl)
+
+        # Étape 6 : Appliquer les scores OCEAN
+        O, C, E, A, N = (self.personality['O'], self.personality['C'],
+                         self.personality['E'], self.personality['A'],
+                         self.personality['N'])
+        
+        pd_sim.input['psi_O'] = O
+        pd_sim.input['psi_E'] = E
+        pd_sim.input['psi_A'] = A
+
+        pv_sim.input['psi_C'] = C
+        pv_sim.input['psi_E'] = E
+        pv_sim.input['psi_N'] = N
+
+        # Calculer les sorties
+        pd_sim.compute()
+        pv_sim.compute()
+
+        if pd_sim.output is None or P_d not in pd_sim.output:
+            self.pd = 0.5
+            print("pd is None")
+        else:
+            self.pd = pd_sim.output['P_d']
+
+
+        if pv_sim.output is None or P_v not in pv_sim.output:
+            self.pv = 0.5
+            print("pv is None")
+        else:
+            self.pv = pv_sim.output['P_v']
+
 
 
     def get_cells_around(self):
