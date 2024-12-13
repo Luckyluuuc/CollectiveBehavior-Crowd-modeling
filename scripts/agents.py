@@ -87,20 +87,20 @@ class PedestrianAgent(Agent):
                 - P_d est la propension à désobéir (float)
                 - P_v est la propension à marcher vite (float)
         """
-        # Étape 1 : Définir les variables d'entrée floues (O, E, A, C, N)
+        # Step 1 : define the input variables (antecedent) (first argument is the range of the variable, second is the name)
         psi_O = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_O')  # Ouverture
         psi_E = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_E')  # Extraversion
         psi_A = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_A')  # Agréabilité
         psi_C = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_C')  # Conscience
         psi_N = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_N')  # Névrosisme
 
-        # Étape 2 : Définir les variables de sortie floues (P_d et P_v)
-        P_d = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_d')  # Propension à désobéir
-        P_v = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_v')  # Propension à marcher vite
+        # Step 2 :  Same for the output variables (consequent)
+        P_d = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_d') 
+        P_v = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_v')  
 
-        # Étape 3 : Définir les ensembles flous pour chaque variable
+        # Step 3 : Define the membership functions (here it is trapezoidal)
         for var in [psi_O, psi_E, psi_A, psi_C, psi_N]:
-            var['low'] = fuzz.trapmf(var.universe, [0, 0, 0.25, 0.5])  # Faible
+            var['low'] = fuzz.trapmf(var.universe, [0, 0, 0.25, 0.5]) # each point in the tab is a point of the trapezoid (its x coordinate)
             var['high'] = fuzz.trapmf(var.universe, [0.5, 0.75, 1, 1])  # Élevé
 
         P_d['low'] = fuzz.trapmf(P_d.universe, [0, 0, 1, 1.5])
