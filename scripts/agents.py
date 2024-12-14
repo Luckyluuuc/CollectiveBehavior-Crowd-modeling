@@ -156,26 +156,15 @@ class PedestrianAgent(Agent):
         delta_pd = 0
         delta_pv = 0
 
-        if 0:
-            neighbors = self.model.grid.get_neighborhood(
-            pos=cell,
-            moore=True,      
-            include_center=False,
-            radius=5        
-            ) # J'ai recalculé les voisins ici, tout comme ça a été calculé dans get_density, mais est-ce que c'est pas un peu sale ?
-
         neighbors = self.model.clusters[self.neigh]
 
         # Contagion from neighbors
         for neighbor in neighbors:
-            # if isinstance(neighbor, PedestrianAgent):
             if neighbor.unique_id != self.unique_id:
-                try :
-                    dist = euclidean_dist(self.pos, neighbor.pos)
-                    delta_pd += exp((neighbor.pd - self.pd) / dist)
-                    delta_pv += exp((neighbor.pv - self.pv) / dist)
-                except TypeError:
-                    print(neighbors)
+                dist = euclidean_dist(self.pos, neighbor.pos)
+                delta_pd += exp((neighbor.pd - self.pd) / dist)
+                delta_pv += exp((neighbor.pv - self.pv) / dist)
+
 
         # Contagion from other sources
         for source in contagious_sources:
@@ -225,6 +214,7 @@ class PedestrianAgent(Agent):
     def step(self):
 
         if self.pos in self.model.exit:
+            print("JE SORS :", self.unique_id)
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
 
@@ -259,12 +249,6 @@ class PedestrianAgent(Agent):
             while previous_cell != best_cell:
                 self.model.add_trajectory(previous_cell, self.unique_id)
                 previous_cell = (previous_cell[0] + dir_x, previous_cell[1] + dir_y)
-
-            # Emotion contagion
-            for agent in self.model.schedule.agents:
-                if isinstance(agent, PedestrianAgent):
-                    contagious_sources = [fire for fire in self.model.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
-                    agent.update_emotions(agent.pos, contagious_sources)
         
         # Reset agent density (usefull for the relationship matrix part, cf modele.step())
         self.p = 0            

@@ -154,6 +154,17 @@ class CrowdModel(Model):
                     agent.neigh = agent.unique_id
 
 
+    def emotion_contagion(self):
+        """
+        Emotion contagion algorithm
+        """
+        for agent in self.schedule.agents:
+            assert(isinstance(agent, PedestrianAgent))
+            contagious_sources = [fire for fire in self.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
+            agent.update_emotions(agent.pos, contagious_sources)
+
+
+
     def step(self):
         # Make the agent move
         self.remove_all_trajectories()
@@ -161,12 +172,14 @@ class CrowdModel(Model):
         self.schedule.step()
         print("Max density per episode: ", self.max_density_per_episode)
         
-
         # Fill relationship matrix with distances from each relation
         self.update_relationships()
 
-        # Update the clusters based on closest neighbor 
+        # Update the clupdate_emotionsusters based on closest neighbor 
         self.coll_clustering_algo()
+
+        # Apply the emotion contagion among the previously computed clusters
+        self.emotion_contagion()
         
 
     def add_trajectory(self, pos, agent_id): 
