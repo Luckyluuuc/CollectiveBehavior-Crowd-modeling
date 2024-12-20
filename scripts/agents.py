@@ -4,10 +4,6 @@ from obstacle import Obstacle
 from math import sqrt, exp
 
 
-# for the fuzzy logic
-import numpy as np
-import skfuzzy as fuzz
-from skfuzzy import control as ctrl
 
 
 def euclidean_dist(pt1, pt2):
@@ -87,75 +83,18 @@ class PedestrianAgent(Agent):
                 - P_d est la propension à désobéir (float)
                 - P_v est la propension à marcher vite (float)
         """
-        # Step 1 : define the input variables (antecedent) (first argument is the range of the variable, second is the name)
-        psi_O = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_O')  # Ouverture
-        psi_E = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_E')  # Extraversion
-        psi_A = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_A')  # Agréabilité
-        psi_C = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_C')  # Conscience
-        psi_N = ctrl.Antecedent(np.arange(0, 1.1, 0.1), 'psi_N')  # Névrosisme
 
-        # Step 2 :  Same for the output variables (consequent)
-        P_d = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_d') 
-        P_v = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'P_v')  
-
-        # Step 3 : Define the membership functions (here it is trapezoidal)
-        for var in [psi_O, psi_E, psi_A, psi_C, psi_N]:
-            var['low'] = fuzz.trapmf(var.universe, [0, 0, 0.25, 0.5]) # each point in the tab is a point of the trapezoid (its x coordinate)
-            var['high'] = fuzz.trapmf(var.universe, [0.5, 0.75, 1, 1])  # Élevé
-
-        P_d['low'] = fuzz.trapmf(P_d.universe, [0, 0, 1, 1.5])
-        P_d['medium'] = fuzz.trapmf(P_d.universe, [1, 1.5, 2, 2.5])
-        P_d['high'] = fuzz.trapmf(P_d.universe, [2, 2.5, 3, 3])
-
-        P_v['low'] = fuzz.trapmf(P_v.universe, [0, 0, 1, 1.5])
-        P_v['medium'] = fuzz.trapmf(P_v.universe, [1, 1.5, 2, 2.5])
-        P_v['high'] = fuzz.trapmf(P_v.universe, [2, 2.5, 3, 3])
-
-        # Étape 4 : Définir les règles floues
-        rule1_pd = ctrl.Rule(psi_O['low'] & psi_E['low'], P_d['high'])  # Faible O et E -> P_d élevé
-        rule2_pd = ctrl.Rule(psi_A['high'], P_d['low'])  # A élevé -> P_d faible
-
-        rule1_pv = ctrl.Rule(psi_C['low'], P_v['high'])  # C faible -> P_v élevé
-        rule2_pv = ctrl.Rule(psi_N['high'] & psi_E['high'], P_v['medium'])  # N et E élevés -> P_v moyen
-
-        # Étape 5 : Créer les systèmes de contrôle flous
-        pd_ctrl = ctrl.ControlSystem([rule1_pd, rule2_pd])
-        pv_ctrl = ctrl.ControlSystem([rule1_pv, rule2_pv])
-
-        pd_sim = ctrl.ControlSystemSimulation(pd_ctrl)
-        pv_sim = ctrl.ControlSystemSimulation(pv_ctrl)
-
-        # Étape 6 : Appliquer les scores OCEAN
         O, C, E, A, N = (self.personality['O'], self.personality['C'],
                          self.personality['E'], self.personality['A'],
                          self.personality['N'])
         
-        pd_sim.input['psi_O'] = O
-        pd_sim.input['psi_E'] = E
-        pd_sim.input['psi_A'] = A
-
-        pv_sim.input['psi_C'] = C
-        pv_sim.input['psi_E'] = E
-        pv_sim.input['psi_N'] = N
-
-        # Calculer les sorties
-        pd_sim.compute()
-        pv_sim.compute()
-
-        if pd_sim.output is None or P_d not in pd_sim.output:
-            self.pd = 0.5
-            print("pd is None")
-        else:
-            self.pd = pd_sim.output['P_d']
-
-
-        if pv_sim.output is None or P_v not in pv_sim.output:
-            self.pv = 0.5
-            print("pv is None")
-        else:
-            self.pv = pv_sim.output['P_v']
-
-
+        pd, pv = self.model.fuzzy_model.compute_parameters(O, E)
+        print(f"Agent {self.unique_id} : Pd = {pd}, Pv = {pv}")
+        assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
+        assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"
+        self.pd = pd
+        self.pv = pv
+        #_____________________________
 
     def get_cells_around(self):
         """

@@ -4,6 +4,14 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
 
+# for the fuzzy logic
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+from fuzzy import SimpleFuzzyModel
+
+
+
 from agents import PedestrianAgent
 from obstacle import Obstacle
 from trajectory import Trajectory
@@ -20,6 +28,10 @@ class CrowdModel(Model):
     def __init__(self, n_agents, width, height, obstacles, exit_pos, fire_sources):
         super().__init__(seed=42)
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
+        self.pd_sim = None
+        self.pv_sim = None
+        self.fuzzy_model = SimpleFuzzyModel()
+
 
         # Fill the grid with some obstacles
         for i, (x,y) in enumerate(obstacles):
@@ -54,6 +66,7 @@ class CrowdModel(Model):
             self.grid.place_agent(agent, empty_cells[cell_i])
             self.schedule.add(agent)
             empty_cells.pop(cell_i)
+
 
     def step(self):
 
