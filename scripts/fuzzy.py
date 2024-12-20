@@ -14,37 +14,38 @@ class DebugFuzzyModel:
 
     def define_fuzzy_model(self) -> None:
         try:
-            print("Creating input variables...")
-            # Single input variable
-            openness = ctrl.Antecedent(np.arange(0, 1.2, 0.1), 'Openness')
+            # Single input variable - utilisons un pas plus fin pour plus de précision
+            openness = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'Openness')
             print("Created Openness antecedent")
             
-            print("Creating output variable...")
             # Single output variable
-            distance = ctrl.Consequent(np.arange(0, 3.1, 0.1), 'Distance')
+            distance = ctrl.Consequent(np.arange(0, 3.01, 0.01), 'Distance')
             print("Created Distance consequent")
             
-            print("Defining membership functions...")
-            # Simple membership functions
-            openness['low'] = fuzz.trimf(openness.universe, [0, 0, 1])
-            openness['high'] = fuzz.trimf(openness.universe, [0, 0.8, 1.1])
+            # Fonctions d'appartenance corrigées
+            # Pour Openness :
+            # - 'low' va de 0 à 0.6 avec chevauchement
+            # - 'high' va de 0.4 à 1 avec chevauchement
+            openness['low'] = fuzz.trapmf(openness.universe, [0, 0, 0.3, 0.6])
+            openness['high'] = fuzz.trapmf(openness.universe, [0.4, 0.7, 1, 1])
             print("Defined openness membership functions")
             
-            distance['low'] = fuzz.trimf(distance.universe, [0, 0, 3])
-            distance['high'] = fuzz.trimf(distance.universe, [0, 3, 3])
+            # Pour Distance :
+            # - 'low' va de 0 à 2 avec chevauchement
+            # - 'high' va de 1 à 3 avec chevauchement
+            distance['low'] = fuzz.trapmf(distance.universe, [0, 0, 1, 2])
+            distance['high'] = fuzz.trapmf(distance.universe, [1, 2, 3, 3])
             print("Defined distance membership functions")
             
-            print("Creating rule...")
-            # Single simple rule
-            rule = ctrl.Rule(openness['low'], distance['high'])
-            print("Created rule")
+            # Créons deux règles pour assurer une meilleure couverture
+            rule1 = ctrl.Rule(openness['low'], distance['high'])
+            rule2 = ctrl.Rule(openness['high'], distance['low'])
+            print("Created rules")
             
-            print("Creating control system...")
-            # Create control system
-            control_system = ctrl.ControlSystem([rule])
+            # Create control system with both rules
+            control_system = ctrl.ControlSystem([rule1, rule2])
             print("Created control system")
             
-            print("Initializing simulation...")
             # Initialize simulation
             self.simulation = ctrl.ControlSystemSimulation(control_system)
             print("Initialized simulation")
@@ -52,50 +53,52 @@ class DebugFuzzyModel:
         except Exception as e:
             print(f"Error during initialization: {str(e)}")
             raise
-    
+
     def compute_distance(self, o: float) -> float:
         """Compute only distance based on openness"""
         try:
-            print(f"\nComputing distance for openness = {o}")
-            
-            print("Setting input...")
+            # Assurons-nous que l'entrée est dans les limites
+            o = max(0, min(1, o))  # Limite entre 0 et 1
             self.simulation.input['Openness'] = o
-            print("Input set successfully")
-            
-            print("Computing...")
             self.simulation.compute()
-            print("Computation completed")
-            
-            print("Getting output...")
             result = self.simulation.output['Distance']
-            print(f"Got output: {result}")
-            
             return result
             
         except Exception as e:
             print(f"Error in compute_distance: {str(e)}")
             raise RuntimeError(f"Error computing distance: {str(e)}")
 
-# Test function
+# Test function améliorée
 def test_model():
     print("Creating model...")
     model = DebugFuzzyModel()
-    for i in range(1):
-        o = 1#np.random.uniform(0, 0.99)
+    
+    # Test systématique
+    test_values = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    print("\nTesting specific values:")
+    for o in test_values:
         try:
             result = model.compute_distance(o)
-            print(f"Test successful! Result = {result}")
+            print(f"Openness = {o:.1f} → Distance = {result:.2f}")
         except Exception as e:
-            print(f"Test failed: {str(e)}")
-            #assert 0, "Test failed"
+            print(f"Test failed for o={o}: {str(e)}")
+    
+    # Test aléatoire
+    print("\nTesting random values:")
+    count = 0
+    n_tests = 1000
+    for i in range(n_tests):
+        o = np.random.uniform(0, 1)
+        try:
+            result = model.compute_distance(o)
+            count += 1
+        except Exception as e:
+            print(f"Test failed for o={o}: {str(e)}")
+            
+    print(f"Random tests completed: {count} successful, {n_tests - count} failed")
 
 if __name__ == "__main__":
     test_model()
-
-
-
-
-
 
 #________Brouillon__________
 
