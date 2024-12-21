@@ -30,7 +30,7 @@ class CrowdModel(Model):
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
         self.pd_sim = None
         self.pv_sim = None
-        self.fuzzy_model = FuzzyModel()
+        self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
 
 
         # Fill the grid with some obstacles

@@ -66,22 +66,16 @@ class PedestrianAgent(Agent):
 
     def fuzzy_preferences_vel_dist(self):
         """
-        Calcule les propensions P_d (désobéissance) et P_v (marche rapide) à partir des scores OCEAN.
-
+        Compute P_v and P_d using the fuzzy model.
         Args:
-            ocean_scores (dict): Dictionnaire contenant les scores OCEAN sous la forme :
-                {
-                    'O': float,  # Ouverture (0 à 1)
-                    'C': float,  # Conscience (0 à 1)
-                    'E': float,  # Extraversion (0 à 1)
-                    'A': float,  # Agréabilité (0 à 1)
-                    'N': float   # Névrosisme (0 à 1)
-                }
-
+            O (float): Openness trait
+            C (float): Conscientiousness trait
+            E (float): Extraversion trait
+            A (float): Agreeableness trait
+            N (float): Neuroticism trait
         Returns:
-            tuple: (P_d, P_v), où :
-                - P_d est la propension à désobéir (float)
-                - P_v est la propension à marcher vite (float)
+            pd (float): Preference distance
+            pv (float): Preference velocity
         """
         
         O, C, E, A, N = (min(1, max(0, self.personality['O'])), min(1, max(0, self.personality['C'])), 
