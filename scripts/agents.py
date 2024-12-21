@@ -83,12 +83,24 @@ class PedestrianAgent(Agent):
                 - P_d est la propension à désobéir (float)
                 - P_v est la propension à marcher vite (float)
         """
-
-        O, C, E, A, N = (self.personality['O'], self.personality['C'],
-                         self.personality['E'], self.personality['A'],
-                         self.personality['N'])
         
-        pd, pv = self.model.fuzzy_model.compute_parameters(O, E)
+        O, C, E, A, N = (min(1, max(0, self.personality['O'])), min(1, max(0, self.personality['C'])), 
+                        min(1, max(0, self.personality['E'])), min(1, max(0, self.personality['A'])), 
+                        min(1, max(0, self.personality['N'])))
+
+        
+        
+        try: 
+            pd, pv = self.model.fuzzy_model.compute_parameters(O, C, E, A, N)
+             #print("Successfully computed fuzzy parameters")
+
+        except:
+            print("Error in fuzzy computation, using default parameters")
+            pd = 1.5
+            pv = 1.5
+
+
+    
         print(f"Agent {self.unique_id} : Pd = {pd}, Pv = {pv}")
         assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
         assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"

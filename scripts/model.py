@@ -8,7 +8,7 @@ from mesa.time import RandomActivation
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-from fuzzy import SimpleFuzzyModel
+from fuzzy import FuzzyModel
 
 
 
@@ -30,7 +30,7 @@ class CrowdModel(Model):
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
         self.pd_sim = None
         self.pv_sim = None
-        self.fuzzy_model = SimpleFuzzyModel()
+        self.fuzzy_model = FuzzyModel()
 
 
         # Fill the grid with some obstacles
