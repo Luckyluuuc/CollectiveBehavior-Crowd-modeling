@@ -9,7 +9,6 @@ from agents import PedestrianAgent
 from obstacle import Obstacle
 from trajectory import Trajectory
 from random import gauss
-from firesource import FireSource
 from math import sqrt, pi, exp
 
 
@@ -19,7 +18,7 @@ def euclidean_dist(pt1, pt2):
 
 
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos, fire_sources):
+    def __init__(self, n_agents, width, height, obstacles, exit_pos):
         super().__init__(seed=42)
         self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
 
@@ -38,13 +37,6 @@ class CrowdModel(Model):
         self.exit = exit_pos  # Position(s) of the exit(s)
         self.max_density_per_episode = 0 
 
-        # Fill the grid with some fire sources
-        self.fire_sources = []  # List to stock them
-        for i, pos in enumerate(fire_sources):
-            fire = FireSource(i + 1000, self, pos)
-            self.grid.place_agent(fire, pos)
-            self.fire_sources.append(fire)  
-
         # Create agents only on empty cells
         empty_cells = [(x, y) for x in range(self.grid.width) for y in range(self.grid.height) if self.grid.is_cell_empty((x, y))]
         for i in range(n_agents):
@@ -58,7 +50,8 @@ class CrowdModel(Model):
                 # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
             agent = PedestrianAgent(i, self, personality)
             cell_i = random.randint(0, len(empty_cells)-1)
-            self.grid.place_agent(agent, empty_cells[cell_i])
+            # self.grid.place_agent(agent, empty_cells[cell_i])
+            self.grid.place_agent(agent, (8, 2))
             self.schedule.add(agent)
             self.clusters[i] = [agent]
             empty_cells.pop(cell_i)
@@ -160,8 +153,7 @@ class CrowdModel(Model):
         """
         for agent in self.schedule.agents:
             assert(isinstance(agent, PedestrianAgent))
-            contagious_sources = [fire for fire in self.fire_sources if euclidean_dist(agent.pos, fire.pos) < 5]
-            agent.update_emotions(agent.pos, contagious_sources)
+            agent.update_emotions()
 
 
 

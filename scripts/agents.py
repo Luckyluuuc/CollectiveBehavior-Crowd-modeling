@@ -151,7 +151,8 @@ class PedestrianAgent(Agent):
         density_score =  density_score * alpha
         return density_score , real_density
     
-    def update_emotions(self, cell, contagious_sources=[]):
+
+    def update_emotions(self):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
         delta_pd = 0
         delta_pv = 0
@@ -164,13 +165,6 @@ class PedestrianAgent(Agent):
                 dist = euclidean_dist(self.pos, neighbor.pos)
                 delta_pd += exp((neighbor.pd - self.pd) / dist)
                 delta_pv += exp((neighbor.pv - self.pv) / dist)
-
-
-        # Contagion from other sources
-        for source in contagious_sources:
-            dist = euclidean_dist(self.pos, source.pos)
-            delta_pd += exp(self.pd / dist)
-            delta_pv += exp(self.pv / dist)
 
         # selective perception
         exits = self.model.exit # now exit is a list to handle multiple exits
@@ -188,10 +182,12 @@ class PedestrianAgent(Agent):
         self.pd += delta_pd * omega_d + zeta_d
         self.pv += delta_pv * omega_v + zeta_v
 
+        print("Final pd, pv de agent :", self.pd, self.pv)
         # Normalisation
         total = self.pd + self.pv
         self.pd /= total
         self.pv /= total
+
 
     def score(self, next_cell, density:float = None):
         """
@@ -201,12 +197,11 @@ class PedestrianAgent(Agent):
         dist_to_exits = [euclidean_dist(next_cell, exit) for exit in exits]
         dist_to_exit = min(dist_to_exits)
 
-
-
         # We compute the density of the next cell
         if density is None: # gard rail in case there is code where density is not computed before
             density, _ = self.get_density(next_cell)
         
+        print(dist_to_exit, exp(- density * (self.pv+1 )/(self.pd+1)), dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1))))
         #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
@@ -222,8 +217,10 @@ class PedestrianAgent(Agent):
             best_cell = None
             density_of_best_cell = None
             for cell in self.get_cells_around():
+                print(cell, end=" ")
                 density, real_density = self.get_density(cell)
                 score = self.score(cell, density)
+
                 if score < min_score:
                     min_score = score
                     best_cell = cell
