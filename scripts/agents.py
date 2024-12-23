@@ -2,6 +2,7 @@ from mesa import Agent
 from mesa.space import MultiGrid
 from obstacle import Obstacle
 from math import sqrt, exp
+from exit import Exit
 import numpy as np
 
 def euclidean_dist(pt1, pt2):
@@ -51,7 +52,7 @@ class PedestrianAgent(Agent):
         self.neigh = unique_id
 
         self.vel0 = vel0  # should belong to {1, 2, 3}
-        self.preferences_vel_dist()
+        self.fuzzy_preferences_vel_dist()
 
     def preferences_vel_dist(self):
         """Compute prefered velocity Pv and prefered distance Pd"""
@@ -64,6 +65,41 @@ class PedestrianAgent(Agent):
         
         # Calcul de Pv
         self.pv = pref_OEC(C) + prefV_E(E) + pref_AN(N)
+
+
+
+    def fuzzy_preferences_vel_dist(self):
+        """
+        Compute P_v and P_d using the fuzzy model.
+        Args:
+            O (float): Openness trait
+            C (float): Conscientiousness trait
+            E (float): Extraversion trait
+            A (float): Agreeableness trait
+            N (float): Neuroticism trait
+        Returns:
+            pd (float): Preference distance
+            pv (float): Preference velocity
+        """
+        
+        O, C, E, A, N = (min(1, max(0, self.personality['O'])), min(1, max(0, self.personality['C'])), 
+                        min(1, max(0, self.personality['E'])), min(1, max(0, self.personality['A'])), 
+                        min(1, max(0, self.personality['N'])))
+
+        
+        
+        try: 
+            pd, pv = self.model.fuzzy_model.compute_parameters(O, C, E, A, N)
+
+        except:
+            print("Error in fuzzy computation, using default parameters")
+            pd = 1.5
+            pv = 1.5
+
+        assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
+        assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"
+        self.pd = pd
+        self.pv = pv
 
 
     def get_cells_around(self):
@@ -94,10 +130,16 @@ class PedestrianAgent(Agent):
                 # Insures the neighbor is part of the grid
                 if grid.out_of_bounds(neighbor):
                     break
+
+                cell_agents = grid.get_cell_list_contents(neighbor)
                 
                 # Insures the neighbor is not an Obstacle or an Agent
                 if not grid.is_cell_empty(neighbor):
-                    break
+                    cell_agents = grid.get_cell_list_contents(neighbor)
+
+                #But if it is an Exit, we won't break so they can continue toward this direction and leave
+                    if any(not isinstance(agent, Exit) for agent in cell_agents):
+                        break  #We see the neighbor is either an Obstacle or an Agent but not an Exit
                 
                 valid_neighbors.append(neighbor)
 
@@ -154,6 +196,7 @@ class PedestrianAgent(Agent):
 
     def update_emotions(self):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
+
         delta_pd = 0
         delta_pv = 0
 
@@ -182,7 +225,6 @@ class PedestrianAgent(Agent):
         self.pd += delta_pd * omega_d + zeta_d
         self.pv += delta_pv * omega_v + zeta_v
 
-        print("Final pd, pv de agent :", self.pd, self.pv)
         # Normalisation
         total = self.pd + self.pv
         self.pd /= total
@@ -201,13 +243,10 @@ class PedestrianAgent(Agent):
         if density is None: # gard rail in case there is code where density is not computed before
             density, _ = self.get_density(next_cell)
         
-        print(dist_to_exit, exp(- density * (self.pv+1 )/(self.pd+1)), dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1))))
-        #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
     
     def step(self):
-
         if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
@@ -217,7 +256,6 @@ class PedestrianAgent(Agent):
             best_cell = None
             density_of_best_cell = None
             for cell in self.get_cells_around():
-                print(cell, end=" ")
                 density, real_density = self.get_density(cell)
                 score = self.score(cell, density)
 

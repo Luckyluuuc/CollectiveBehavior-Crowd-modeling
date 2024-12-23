@@ -5,10 +5,20 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
 
+# for the fuzzy logic
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+from fuzzy import FuzzyModel
+from grid_utils import MultiGridWithProperties
+
+
 from agents import PedestrianAgent
 from obstacle import Obstacle
 from trajectory import Trajectory
 from random import gauss
+from math import sqrt
+from exit import Exit
 from math import sqrt, pi, exp
 
 
@@ -20,7 +30,19 @@ def euclidean_dist(pt1, pt2):
 class CrowdModel(Model):
     def __init__(self, n_agents, width, height, obstacles, exit_pos):
         super().__init__(seed=42)
-        self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
+        self.grid = MultiGridWithProperties(width, height, torus=False)  # Torus=False to avoid cycling edges
+        self.pd_sim = None
+        self.pv_sim = None
+        self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
+
+        for pos in exit_pos:
+            self.grid.set_cell_property(pos, 'is_exit', True)
+
+        
+        for i, (x, y) in enumerate(exit_pos):
+            exit_agent = Exit(f"exit-{i}", self)
+            self.grid.place_agent(exit_agent, (x, y))
+
 
         self.relationship_matrix = np.zeros((n_agents, n_agents)) # cf. Algorithm 6: Emotion Contagion Model
         self.clusters = {}  # keys are cluster ids, values are agents who are part of the cluster
@@ -50,8 +72,8 @@ class CrowdModel(Model):
                 # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
             agent = PedestrianAgent(i, self, personality)
             cell_i = random.randint(0, len(empty_cells)-1)
-            # self.grid.place_agent(agent, empty_cells[cell_i])
-            self.grid.place_agent(agent, (8, 2))
+            self.grid.place_agent(agent, empty_cells[cell_i])
+            #self.grid.place_agent(agent, (8, 2))
             self.schedule.add(agent)
             self.clusters[i] = [agent]
             empty_cells.pop(cell_i)

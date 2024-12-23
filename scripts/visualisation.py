@@ -4,6 +4,7 @@ from agents import PedestrianAgent
 from model import CrowdModel # type: ignore
 from obstacle import Obstacle
 from trajectory import Trajectory
+from exit import Exit
 
 def highest_trait(agent):
     """
@@ -39,10 +40,11 @@ def agent_portrayal(agent):
     
     if isinstance(agent, Obstacle):
         return {
-            "Shape": "circle",
+            "Shape": "rect",
             "Filled": "true",
-            "r": 1,
-            "Color": "grey",
+            "w": 1,
+            "h": 1,
+            "Color": "red",
             "Layer": 0,
         }
     
@@ -56,14 +58,22 @@ def agent_portrayal(agent):
             "Color": colors[agent.agent_id % len(colors)],
             "Layer": 1  ,
         }
+    
+    elif isinstance(agent, Exit):
+        return {
+            "Shape": "rect",
+            "Filled": "false",
+            "w": 1,
+            "h": 1,
+            "Color": "black",
+            "Layer": 0,
+        }
     return {}
 
 
-
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=[(50,0), (0, 50)]):
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), (21,40), (20,39), (21,39)], exit_pos=[(50,0), (0, 50)]):
     """
-    Lance le serveur de visualisation.
-    TODO : Print les obstacles sur la grille.
+    Run the visualization serve
     """
     grid = CanvasGrid(agent_portrayal, width, height, 1000, 1000)
     server = ModularServer(
