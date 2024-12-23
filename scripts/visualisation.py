@@ -44,7 +44,7 @@ def agent_portrayal(agent):
             "Shape": "circle",
             "Filled": "true",
             "r": 1,
-            "Color": "grey",
+            "Color": "red",
             "Layer": 0,
         }
     if isinstance(agent, FireSource):
@@ -82,7 +82,7 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(2,40)], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.

@@ -36,6 +36,12 @@ class CrowdModel(Model):
         for pos in exit_pos:
             self.grid.set_cell_property(pos, 'is_exit', True)
 
+        
+        for i, (x, y) in enumerate(exit_pos):
+            exit_agent = Exit(f"exit-{i}", self)
+            self.grid.place_agent(exit_agent, (x, y))
+            print("on a placé l'agent")
+
 
         # Fill the grid with some obstacles
         for i, (x,y) in enumerate(obstacles):
