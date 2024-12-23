@@ -90,21 +90,17 @@ class PedestrianAgent(Agent):
         
         try: 
             pd, pv = self.model.fuzzy_model.compute_parameters(O, C, E, A, N)
-             #print("Successfully computed fuzzy parameters")
 
         except:
             print("Error in fuzzy computation, using default parameters")
             pd = 1.5
             pv = 1.5
 
-
-    
-        print(f"Agent {self.unique_id} : Pd = {pd}, Pv = {pv}")
         assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
         assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"
         self.pd = pd
         self.pv = pv
-        #_____________________________
+
 
     def get_cells_around(self):
         """
@@ -229,7 +225,6 @@ class PedestrianAgent(Agent):
         self.pd += delta_pd * omega_d + zeta_d
         self.pv += delta_pv * omega_v + zeta_v
 
-        print("Final pd, pv de agent :", self.pd, self.pv)
         # Normalisation
         total = self.pd + self.pv
         self.pd /= total
@@ -248,8 +243,6 @@ class PedestrianAgent(Agent):
         if density is None: # gard rail in case there is code where density is not computed before
             density, _ = self.get_density(next_cell)
         
-        print(dist_to_exit, exp(- density * (self.pv+1 )/(self.pd+1)), dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1))))
-        #return (self.pd * dist_to_exit) + (self.pv * density)
         return dist_to_exit / (self.vel0 * exp(- density * (self.pv+1 )/(self.pd+1)))
     
     
@@ -263,7 +256,6 @@ class PedestrianAgent(Agent):
             best_cell = None
             density_of_best_cell = None
             for cell in self.get_cells_around():
-                print(cell, end=" ")
                 density, real_density = self.get_density(cell)
                 score = self.score(cell, density)
 

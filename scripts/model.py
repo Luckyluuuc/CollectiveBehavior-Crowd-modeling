@@ -42,7 +42,6 @@ class CrowdModel(Model):
         for i, (x, y) in enumerate(exit_pos):
             exit_agent = Exit(f"exit-{i}", self)
             self.grid.place_agent(exit_agent, (x, y))
-            #print("on a placé l'agent")
 
 
         self.relationship_matrix = np.zeros((n_agents, n_agents)) # cf. Algorithm 6: Emotion Contagion Model
