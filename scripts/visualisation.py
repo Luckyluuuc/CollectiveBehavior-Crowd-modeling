@@ -4,7 +4,6 @@ from agents import PedestrianAgent
 from model import CrowdModel # type: ignore
 from obstacle import Obstacle
 from trajectory import Trajectory
-from firesource import FireSource
 
 def highest_trait(agent):
     """
@@ -46,14 +45,6 @@ def agent_portrayal(agent):
             "Color": "grey",
             "Layer": 0,
         }
-    if isinstance(agent, FireSource):
-        return {
-            "Shape": "circle",
-            "Filled": "true",
-            "r": 1.5,
-            "Color": "red",
-            "Layer": 0,
-        }
     
     if isinstance(agent, Trajectory):
         colors = ["black", "blue", "green", "yellow", "purple", "orange", "brown", "black"]
@@ -69,9 +60,7 @@ def agent_portrayal(agent):
 
 
 
-
-
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_pos=[(50,0), (0, 50)]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
@@ -81,10 +70,14 @@ def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[], exit_p
         CrowdModel,
         [grid],
         "Simulation de Foule",
-        {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos, "fire_sources" : fire_sources},
+        {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos},
     )
     server.port = 8521  
     server.launch()
 
 if __name__ == "__main__":
-    run_visualisation()
+    agents = 1
+    length = 10
+    exits = [(5,0), (0,5)]
+    exit_fire = [(5,0)]
+    run_visualisation(nb_agents=agents, width=length, height=length, exit_pos=exits)
