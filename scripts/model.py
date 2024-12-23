@@ -32,6 +32,9 @@ class CrowdModel(Model):
         self.pv_sim = None
         self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
 
+        for pos in exit_pos:
+            self.grid.set_cell_property(pos, 'is_exit', True)
+
 
         # Fill the grid with some obstacles
         for i, (x,y) in enumerate(obstacles):

@@ -168,6 +168,8 @@ class PedestrianAgent(Agent):
     
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
+
+        print("update_emotions appelé")
         delta_pd = 0
         delta_pv = 0
 
@@ -229,7 +231,7 @@ class PedestrianAgent(Agent):
     
     
     def step(self):
-
+        print("agents step self appelé")
         if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)

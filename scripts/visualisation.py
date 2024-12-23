@@ -5,6 +5,7 @@ from model import CrowdModel # type: ignore
 from obstacle import Obstacle
 from trajectory import Trajectory
 from firesource import FireSource
+from exit import Exit
 
 def highest_trait(agent):
     """
@@ -64,6 +65,16 @@ def agent_portrayal(agent):
             "r": 0.1,
             "Color": colors[agent.agent_id % len(colors)],
             "Layer": 1  ,
+        }
+    
+    elif isinstance(agent, Exit):
+        return {
+            "Shape": "rect",
+            "Filled": "true",
+            "w": 1,
+            "h": 1,
+            "Color": "pink",
+            "Layer": 0,
         }
     return {}
 
