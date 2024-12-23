@@ -2,6 +2,7 @@ from mesa import Agent
 from mesa.space import MultiGrid
 from obstacle import Obstacle
 from math import sqrt, exp
+from exit import Exit
 
 
 
@@ -130,10 +131,16 @@ class PedestrianAgent(Agent):
                 # Insures the neighbor is part of the grid
                 if grid.out_of_bounds(neighbor):
                     break
+
+                cell_agents = grid.get_cell_list_contents(neighbor)
                 
                 # Insures the neighbor is not an Obstacle or an Agent
                 if not grid.is_cell_empty(neighbor):
-                    break
+                    cell_agents = grid.get_cell_list_contents(neighbor)
+
+                #But if it is an Exit, we won't break so they can continue toward this direction and leave
+                    if any(not isinstance(agent, Exit) for agent in cell_agents):
+                        break  #We see the neighbor is either an Obstacle or an Agent but not an Exit
                 
                 valid_neighbors.append(neighbor)
 
@@ -169,7 +176,6 @@ class PedestrianAgent(Agent):
     def update_emotions(self, cell, contagious_sources=[]):
         """Algorithm 2, p7 : Emotion Contagion Algorithm"""
 
-        print("update_emotions appelé")
         delta_pd = 0
         delta_pv = 0
 
@@ -231,7 +237,6 @@ class PedestrianAgent(Agent):
     
     
     def step(self):
-        print("agents step self appelé")
         if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)

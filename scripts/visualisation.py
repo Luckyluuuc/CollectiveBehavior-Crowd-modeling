@@ -41,9 +41,10 @@ def agent_portrayal(agent):
     
     if isinstance(agent, Obstacle):
         return {
-            "Shape": "circle",
+            "Shape": "rect",
             "Filled": "true",
-            "r": 1,
+            "w": 1,
+            "h": 1,
             "Color": "red",
             "Layer": 0,
         }
@@ -70,10 +71,10 @@ def agent_portrayal(agent):
     elif isinstance(agent, Exit):
         return {
             "Shape": "rect",
-            "Filled": "true",
+            "Filled": "false",
             "w": 1,
             "h": 1,
-            "Color": "pink",
+            "Color": "black",
             "Layer": 0,
         }
     return {}
@@ -82,7 +83,7 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(2,40)], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
+def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), (21,40), (20,39), (21,39)], exit_pos=[(50,0), (0, 50)], fire_sources=[]):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
