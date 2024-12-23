@@ -9,7 +9,7 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 from fuzzy import FuzzyModel
-
+from grid_utils import MultiGridWithProperties
 
 
 from agents import PedestrianAgent
@@ -18,6 +18,7 @@ from trajectory import Trajectory
 from random import gauss
 from firesource import FireSource
 from math import sqrt
+from exit import Exit
 
 
 def euclidean_dist(pt1, pt2):
@@ -27,7 +28,7 @@ def euclidean_dist(pt1, pt2):
 class CrowdModel(Model):
     def __init__(self, n_agents, width, height, obstacles, exit_pos, fire_sources):
         super().__init__(seed=42)
-        self.grid = MultiGrid(width, height, torus=False)  # Torus=False to avoid cycling edges
+        self.grid = MultiGridWithProperties(width, height, torus=False)  # Torus=False to avoid cycling edges
         self.pd_sim = None
         self.pv_sim = None
         self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
