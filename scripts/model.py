@@ -17,7 +17,6 @@ from agents import PedestrianAgent
 from obstacle import Obstacle
 from trajectory import Trajectory
 from random import gauss
-from firesource import FireSource
 from math import sqrt
 from exit import Exit
 from math import sqrt, pi, exp
@@ -74,8 +73,8 @@ class CrowdModel(Model):
                 # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
             agent = PedestrianAgent(i, self, personality)
             cell_i = random.randint(0, len(empty_cells)-1)
-            # self.grid.place_agent(agent, empty_cells[cell_i])
-            self.grid.place_agent(agent, (8, 2))
+            self.grid.place_agent(agent, empty_cells[cell_i])
+            #self.grid.place_agent(agent, (8, 2))
             self.schedule.add(agent)
             self.clusters[i] = [agent]
             empty_cells.pop(cell_i)
