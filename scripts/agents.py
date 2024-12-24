@@ -40,19 +40,28 @@ def prefV_E(value):
 
 
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1, vel0=2):
+    def __init__(self, unique_id, model, personality, vel0=2):
         super().__init__(unique_id, model)
         self.personality = personality  # dict whose keys ['O','C','E','A','N'] and values belong in [0;1]
-        self.initial_pd = initial_pd    
-        self.initial_pv = initial_pv
-
         self.vel = (0,0)   # values required to compute the relationship matrix (cf equation 5)
         
         self.p = 0      # collective density (cf equation 9) TODO: revoir la valeur par défaut
         self.neigh = unique_id
 
         self.vel0 = vel0  # should belong to {1, 2, 3}
-        self.fuzzy_preferences_vel_dist()
+        self.fuzzy_preferences_vel_dist() # If we want to activate/desactivate the fuzzy model change this ligne
+        self.initial_pd = self.pd    
+        self.initial_pv = self.pv
+
+
+        # for the metrics and finishing the episode
+        self.nb_steps = 0
+        self.end = False
+        self.nb_steps_per_agent = {} # {agent_id: nb_steps}
+        
+        
+
+
 
     def preferences_vel_dist(self):
         """Compute prefered velocity Pv and prefered distance Pd"""
