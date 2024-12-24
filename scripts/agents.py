@@ -54,11 +54,7 @@ class PedestrianAgent(Agent):
         self.initial_pv = self.pv
 
 
-        # for the metrics and finishing the episode
-        self.nb_steps = 0
-        self.end = False
-        self.nb_steps_per_agent = {} # {agent_id: nb_steps}
-        
+
         
 
 
