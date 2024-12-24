@@ -255,6 +255,7 @@ class PedestrianAgent(Agent):
         if self.pos in self.model.exit:
             self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
             self.model.schedule.remove(self)
+            self.model.needed_steps_per_agents[self.unique_id] = self.model.nb_steps
 
         else:
             min_score = float('inf')

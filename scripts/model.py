@@ -24,6 +24,7 @@ from math import sqrt, pi, exp
 # for metrics storage 
 import json
 from datetime import datetime
+import os
 
 def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
@@ -70,6 +71,7 @@ class CrowdModel(Model):
         self.nb_obstacles = len(obstacles)
         self.max_density_across_episodes = []
         self.needed_steps_per_agents = {} # key: agent_id, value: nb_steps
+        self.agent_personalities = {} # key: agent_id, value: personality (five traits OCEAN)
 
 
         # Create agents only on empty cells
@@ -84,6 +86,7 @@ class CrowdModel(Model):
                 personality[trait] = gauss(mu, sigma**2)
                 # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
             agent = PedestrianAgent(i, self, personality)
+            self.agent_personalities[i] = personality
             cell_i = random.randint(0, len(empty_cells)-1)
             self.grid.place_agent(agent, empty_cells[cell_i])
             #self.grid.place_agent(agent, (8, 2))
@@ -253,9 +256,12 @@ class CrowdModel(Model):
         """
         Dumps simulation metrics to a JSON file with structured information
         
-        Parameters:
-        simulation_name (str): Name identifier for the simulation
         """
+
+        # Ensure the 'results' directory exists
+        if not os.path.exists('results'):
+            os.makedirs('results')
+        
         print("Please enter a name for the simulation :")
         simulation_name = input()
         metrics = {
@@ -276,10 +282,10 @@ class CrowdModel(Model):
                 "total_steps": self.nb_steps,
                 "density_metrics": {
                     "max_density_across_episodes": self.max_density_across_episodes,
-                    "final_max_density": self.max_density_per_episode
                 },
-                "agent_performance": {
-                    "steps_needed_per_agent": self.needed_steps_per_agents
+                "agent_infos": {
+                    "steps_needed_per_agent": self.needed_steps_per_agents,
+                    "personalities": self.agent_personalities
                 }
             }
         }
