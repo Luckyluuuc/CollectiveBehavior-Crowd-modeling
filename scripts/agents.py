@@ -253,9 +253,9 @@ class PedestrianAgent(Agent):
     
     def step(self):
         if self.pos in self.model.exit:
-            self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
+            self.model.grid.remove_agent(self)  # The agent is removed from the grid
             self.model.schedule.remove(self)
-            self.model.needed_steps_per_agents[self.unique_id] = self.model.nb_steps
+            self.model.needed_steps_per_agent[self.unique_id] = self.model.nb_steps # Store the number of steps needed for this agent
 
         else:
             min_score = float('inf')
