@@ -33,12 +33,21 @@ def euclidean_dist(pt1, pt2):
 
 
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos):
+    def __init__(self, n_agents, width, height, obstacles, exit_pos, 
+                 use_fuzzy=True, enable_emotions=True, enable_relationships=True, enable_clustering=True):
         super().__init__(seed=42)
+
+         # Store configuration options
+        self.use_fuzzy = use_fuzzy
+        self.enable_emotions = enable_emotions
+        self.enable_relationships = enable_relationships
+        self.enable_clustering = enable_clustering
+        self.fuzzy_model = FuzzyModel() if self.use_fuzzy else None # Fuzzy model to compute Pd and Pv or not        
+        self.end = False
+
         self.grid = MultiGridWithProperties(width, height, torus=False)  # Torus=False to avoid cycling edges
         self.pd_sim = None
         self.pv_sim = None
-        self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
 
         for pos in exit_pos:
             self.grid.set_cell_property(pos, 'is_exit', True)
@@ -207,15 +216,20 @@ class CrowdModel(Model):
             self.schedule.step()
             print("Max density per episode: ", self.max_density_per_episode)
 
+            # Apply optional mechanisms
+            if self.enable_relationships:
+                # Fill relationship matrix with distances from each relation
+                print("update relationship")
+                self.update_relationships()
             
-            # Fill relationship matrix with distances from each relation
-            self.update_relationships()
-
+            if self.enable_clustering:
             # Update the clupdate_emotionsusters based on closest neighbor 
-            self.coll_clustering_algo()
-
+                self.coll_clustering_algo()
+            
+            if self.enable_emotions:
             # Apply the emotion contagion among the previously computed clusters
-            self.emotion_contagion()
+                self.emotion_contagion()
+
 
             # reported metrics
             self.nb_steps += 1

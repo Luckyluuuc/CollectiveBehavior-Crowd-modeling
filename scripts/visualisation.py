@@ -72,22 +72,40 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=20, width=70, height=70, obstacles=[], exit_pos=[(50,0), (0, 50)]):
+def run_visualisation(nb_agents=50, width=70, height=70, obstacles=[], exit_pos=[(50,0), (0, 50)]):
     """
     Run the visualization serve
     """
+    # CHOICE OF MODELS FOR TESTS
+    use_fuzzy = True 
+    enable_emotions = True  
+    enable_relationships = True  
+    enable_clustering = True  
+
     grid = CanvasGrid(agent_portrayal, width, height, 1000, 1000)
     server = ModularServer(
         CrowdModel,
-        [grid],  # Ajoutez le message au rendu
+        [grid],
         "Simulation de Foule",
-        {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos},
+        {
+            "n_agents": nb_agents,
+            "width": width,
+            "height": height,
+            "obstacles": obstacles,
+            "exit_pos": exit_pos,
+            "use_fuzzy": use_fuzzy,
+            "enable_emotions": enable_emotions,
+            "enable_relationships": enable_relationships,
+            "enable_clustering": enable_clustering,
+        },
     )
-    server.port = 8521  
+    server.port = 8521  # Port par défaut
     server.launch()
 
 if __name__ == "__main__":
     run_visualisation()
+
+    
 
     """
     agents = 1

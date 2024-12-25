@@ -92,19 +92,20 @@ class PedestrianAgent(Agent):
                         min(1, max(0, self.personality['N'])))
 
         
+        if self.model.use_fuzzy and self.model.fuzzy_model:
+            try:
+                pd, pv = self.model.fuzzy_model.compute_parameters(O,C,E,A,N)
+            except Exception:
+                print("Error in fuzzy computation, using default parameters")
+                pd, pv = 1.5, 1.5
+        else:
+            pd, pv = 1.5, 1.5
+            
         
-        try: 
-            pd, pv = self.model.fuzzy_model.compute_parameters(O, C, E, A, N)
-
-        except:
-            print("Error in fuzzy computation, using default parameters")
-            pd = 1.5
-            pv = 1.5
 
         assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
         assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"
-        self.pd = pd
-        self.pv = pv
+        self.pd, self.pv = pd, pv
 
 
     def get_cells_around(self):
