@@ -4,6 +4,7 @@ import numpy as np
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
+import sys
 
 # for the fuzzy logic
 import numpy as np
@@ -226,6 +227,9 @@ class CrowdModel(Model):
                 print("Dumping metrics in JSON file")
                 print("\n \n \n \n \n \n \n \n \n \n")
                 self.dump_metrics()
+                print("Exiting the simulation...")
+                sys.exit(0)
+        
         
 
 

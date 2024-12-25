@@ -71,14 +71,15 @@ def agent_portrayal(agent):
     return {}
 
 
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), (21,40), (20,39), (21,39)], exit_pos=[(50,0), (0, 50)]):
+
+def run_visualisation(nb_agents=20, width=70, height=70, obstacles=[], exit_pos=[(50,0), (0, 50)]):
     """
     Run the visualization serve
     """
     grid = CanvasGrid(agent_portrayal, width, height, 1000, 1000)
     server = ModularServer(
         CrowdModel,
-        [grid],
+        [grid],  # Ajoutez le message au rendu
         "Simulation de Foule",
         {"n_agents": nb_agents, "width": width, "height": height, "obstacles": obstacles, "exit_pos": exit_pos},
     )
@@ -86,8 +87,12 @@ def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), 
     server.launch()
 
 if __name__ == "__main__":
+    run_visualisation()
+
+    """
     agents = 1
     length = 10
     exits = [(5,0), (0,5)]
     exit_fire = [(5,0)]
     run_visualisation(nb_agents=agents, width=length, height=length, exit_pos=exits)
+    """
