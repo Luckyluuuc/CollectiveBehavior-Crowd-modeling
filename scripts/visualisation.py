@@ -121,6 +121,8 @@ def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), 
 
 if __name__ == "__main__":
     agents = int(input("Enter the number of agents (default 400): ") or 400)
+    width = int(input("Enter the width of the grid (default 100): ") or 100)
+    height = int(input("Enter the height of the grid (default 100): ") or 100)
     personality_choice = input(
         "Choose the personality function (random, fully N, only N; default 'random'): "
     ) or "random"
@@ -138,5 +140,7 @@ if __name__ == "__main__":
 
     run_visualisation(
         nb_agents=agents,
+        width=width,
+        height=height,
         personality=personality_function,
     )
