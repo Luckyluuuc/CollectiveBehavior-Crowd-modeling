@@ -40,7 +40,7 @@ def agent_portrayal(agent):
     
     if isinstance(agent, Obstacle):
         return {
-            "Shape": "rect",
+            "Shape": "/home/alexis-le-s/Cours/S5/Colletive_Behavior/CollectiveBehavior-Crowd-modeling/assets/wall.jpeg",
             "Filled": "true",
             "w": 1,
             "h": 1,
@@ -61,10 +61,10 @@ def agent_portrayal(agent):
     
     elif isinstance(agent, Exit):
         return {
-            "Shape": "rect",
+            "Shape": "/home/alexis-le-s/Cours/S5/Colletive_Behavior/CollectiveBehavior-Crowd-modeling/assets/exit.gif",
             "Filled": "false",
-            "w": 1,
-            "h": 1,
+            "w": 4,
+            "h": 4,
             "Color": "black",
             "Layer": 0,
         }
@@ -72,7 +72,7 @@ def agent_portrayal(agent):
 
 
 
-def run_visualisation(nb_agents=50, width=70, height=70, obstacles=[], exit_pos=[(50,0), (0, 50)]):
+def run_visualisation(nb_agents=50, width=70, height=70, obstacles=[(10,10)], exit_pos=[(50,0), (0, 50)]):
     """
     Run the visualization serve
     """
