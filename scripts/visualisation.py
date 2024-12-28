@@ -104,7 +104,7 @@ def only_N():
     return personality
 
 
-def run_visualisation(nb_agents=400, width=100, height=100, obstacles=[(20,40), (21,40), (20,39), (21,39)], exit_pos=[(50,0), (51,0), (52,0), (53,0), (0, 50), (0,51), (0,52), (0,53)], personality = only_N):
+def run_visualisation(nb_agents, width, height, obstacles, exit_pos, personality):
     """
     Lance le serveur de visualisation.
     TODO : Print les obstacles sur la grille.
@@ -123,9 +123,59 @@ if __name__ == "__main__":
     agents = int(input("Enter the number of agents (default 400): ") or 400)
     width = int(input("Enter the width of the grid (default 100): ") or 100)
     height = int(input("Enter the height of the grid (default 100): ") or 100)
+    exit_bottom = int(input("Enter the nb of bottom exit on the grid (default 1): ") or 1)
+    exit_top = int(input("Enter the nb of top exit on the grid (default 1): ") or 1)
+    exit_left = int(input("Enter the nb of left exit on the grid (default 1): ") or 1)
+    exit_right = int(input("Enter the nb of right exit on the grid (default 1): ") or 1)
     personality_choice = input(
         "Choose the personality function (random, fully N, only N; default 'random'): "
     ) or "random"
+
+    exit_pos = []
+    for i in range(exit_bottom):
+        center = width // (exit_bottom + 1) * (i + 1)
+        exit_pos.append((center, 0))
+        if center - 1 >= 0:
+            exit_pos.append((center - 1, 0))
+            if center - 2 >= 0:
+                exit_pos.append((center - 2, 0))
+        if center + 1 <= width:
+            exit_pos.append((center + 1, 0))
+            if center + 2 < width:
+                exit_pos.append((center + 2, 0))
+    for i in range(exit_top):
+        center = width // (exit_bottom + 1) * (i + 1)
+        exit_pos.append((center, height - 1))
+        if center - 1 >= 0:
+            exit_pos.append((center - 1, height - 1))
+            if center - 2 >= 0:
+                exit_pos.append((center - 2, height - 1))
+        if center + 1 <= width:
+            exit_pos.append((center + 1, height - 1))
+            if center + 2 < width:
+                exit_pos.append((center + 2, height - 1))
+    for i in range(exit_left):
+        center = height // (exit_left + 1) * (i + 1)
+        exit_pos.append((0, center))
+        if center - 1 >= 0:
+            exit_pos.append((0, center - 1))
+            if center - 2 >= 0:
+                exit_pos.append((0, center - 2))
+        if center + 1 <= width:
+            exit_pos.append((0, center + 1))
+            if center + 2 < width:
+                exit_pos.append((0, center + 2))
+    for i in range(exit_right):
+        center = height // (exit_right + 1) * (i + 1)
+        exit_pos.append((width - 1, center))
+        if center - 1 >= 0:
+            exit_pos.append((width - 1, center - 1))
+            if center - 2 >= 0:
+                exit_pos.append((width - 1, center - 2))
+        if center + 1 <= width:
+            exit_pos.append((width - 1, center + 1))
+            if center + 2 < width:
+                exit_pos.append((width - 1, center + 2))
 
     # Set the personality function based on user input
     if personality_choice == "random":
@@ -142,5 +192,7 @@ if __name__ == "__main__":
         nb_agents=agents,
         width=width,
         height=height,
+        obstacles=[(20,40), (21,40), (20,39), (21,39)],
+        exit_pos=exit_pos,
         personality=personality_function,
     )
