@@ -31,9 +31,8 @@ def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
     return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
 
-
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos, 
+    def __init__(self, n_agents, width, height, obstacles, exit_pos, personality_function, 
                  use_fuzzy=True, enable_emotions=True, enable_relationships=True, enable_clustering=True):
         super().__init__(seed=42)
 
@@ -89,12 +88,7 @@ class CrowdModel(Model):
         for i in range(n_agents):
             if len(empty_cells) == 0:
                 break
-            personality = {}
-            for trait in ['O', 'C', 'E', 'A', 'N']:
-                mu = self.random.uniform(0, 1)
-                sigma = self.random.uniform(-0.1, 0.1)
-                personality[trait] = gauss(mu, sigma**2)
-                # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
+            personality = personality_function()
             agent = PedestrianAgent(i, self, personality)
             self.agent_personalities[i] = personality
             cell_i = random.randint(0, len(empty_cells)-1)
@@ -103,7 +97,7 @@ class CrowdModel(Model):
             self.schedule.add(agent)
             self.clusters[i] = [agent]
             empty_cells.pop(cell_i)
-
+            
 
     def theta(self, dori):
         """
