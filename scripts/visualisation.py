@@ -26,7 +26,27 @@ def color_trait(agent):
     if highest_trait(agent) == "A" :
         return "yellow"
     if highest_trait(agent) == "N" :
-        return "green" 
+        return "green"
+
+def color_pd(agent):
+    pd = agent.pd
+    if pd < 0.25:
+        return "green"
+    if pd < 0.5:
+        return "yellow"
+    if pd < 0.75:
+        return "orange"
+    return "red"
+
+def color_pv(agent):
+    pv = agent.pv
+    if pv < 0.25:
+        return "green"
+    if pv < 0.5:
+        return "yellow"
+    if pv < 0.75:
+        return "orange"
+    return "red"
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
@@ -35,8 +55,8 @@ def agent_portrayal(agent):
             "Shape": "circle",
             "Filled": "true",
             "r": 1.2,
-            #"Color": color[agent.unique_id % len(color)],
-            "Color": color_trait(agent),
+            # "Color": color_trait(agent),
+            "Color": color_pv(agent),
             "Layer": 0,
         }
     
