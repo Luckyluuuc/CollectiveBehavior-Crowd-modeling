@@ -1,5 +1,4 @@
 import argparse
-from random import gauss
 import random
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
@@ -79,8 +78,8 @@ def random_personality():
         for trait in ['O', 'C', 'E', 'A', 'N']:
             mu = random.uniform(0, 1)
             sigma = random.uniform(-0.1, 0.1)
-            personality[trait] = gauss(mu, sigma**2)
-            # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
+            personality[trait] = random.gauss(mu, sigma**2)
+            # Personality[trait] = max(0, min(1, random.gauss(mu, abs(sigma))))
         return personality
 
 def full_N():
@@ -91,7 +90,7 @@ def full_N():
         else:
             mu = random.uniform(0, 1)
             sigma = random.uniform(-0.1, 0.1)
-            personality[trait] = gauss(mu, sigma**2)
+            personality[trait] = random.gauss(mu, sigma**2)
     return personality
 
 def only_N():
@@ -104,13 +103,13 @@ def only_N():
     return personality
 
 
-def run_visualisation(nb_agents, width, height, obstacles, exit_pos, personality):
+def run_visualisation(nb_agents, width, height, obstacles, exit_pos, personality, agent_locations):
     """
     Run the visualization serve
     """
     # CHOICE OF MODELS FOR TESTS
     use_fuzzy = True 
-    enable_emotions = True  
+    enable_emotions = True
     enable_relationships = True  
     enable_clustering = True  
 
@@ -126,6 +125,7 @@ def run_visualisation(nb_agents, width, height, obstacles, exit_pos, personality
             "obstacles": obstacles,
             "exit_pos": exit_pos,
             "personality_function": personality,
+            "agent_loc": agent_locations,
             "use_fuzzy": use_fuzzy,
             "enable_emotions": enable_emotions,
             "enable_relationships": enable_relationships,
@@ -204,11 +204,31 @@ if __name__ == "__main__":
         print("Invalid choice, defaulting to 'random'")
         personality_function = random_personality
 
+
+    if 0:
+        # Generate 300 unique coordinates in the range [0, 100] for x and [50, 100] for y
+        coordinates = set()
+
+        while len(coordinates) < 300:
+            x = int(random.uniform(0, 100))
+            y = int(random.uniform(50, 100))
+            coordinates.add((x, y))
+
+        while len(coordinates) < 400:
+            x = int(random.uniform(0, 100))
+            y = int(random.uniform(0, 50))
+            coordinates.add((x, y))
+
+        coordinates = list(coordinates)
+    else:
+        coordinates = False
+
     run_visualisation(
         nb_agents=agents,
         width=width,
         height=height,
-        obstacles=[(20,40), (21,40), (20,39), (21,39)],
+        obstacles=[],
         exit_pos=exit_pos,
         personality=personality_function,
+        agent_locations=coordinates
     )
