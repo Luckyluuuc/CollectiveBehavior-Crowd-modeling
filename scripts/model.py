@@ -32,11 +32,12 @@ def euclidean_dist(pt1, pt2):
     return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
 
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos, personality_function, 
+    def __init__(self, n_agents, width, height, obstacles, exit_pos, personality_function, agent_loc=False,
                  use_fuzzy=True, enable_emotions=True, enable_relationships=True, enable_clustering=True):
         super().__init__(seed=42)
 
          # Store configuration options
+        random.seed(42)
         self.use_fuzzy = use_fuzzy
         self.enable_emotions = enable_emotions
         self.enable_relationships = enable_relationships
@@ -84,6 +85,9 @@ class CrowdModel(Model):
 
 
         # Create agents only on empty cells
+        if agent_loc:
+            assert(n_agents <= len(agent_loc)), "The number of agent coordinates is not enought to cover every agents."
+
         empty_cells = [(x, y) for x in range(self.grid.width) for y in range(self.grid.height) if self.grid.is_cell_empty((x, y))]
         for i in range(n_agents):
             if len(empty_cells) == 0:
@@ -91,12 +95,17 @@ class CrowdModel(Model):
             personality = personality_function()
             agent = PedestrianAgent(i, self, personality)
             self.agent_personalities[i] = personality
-            cell_i = random.randint(0, len(empty_cells)-1)
-            self.grid.place_agent(agent, empty_cells[cell_i])
-            #self.grid.place_agent(agent, (8, 2))
+
+            # agent_loc is an array full of agent locations (couple of coordinates)
+            if agent_loc:
+                self.grid.place_agent(agent, agent_loc[i])
+            else:
+                cell_i = random.randint(0, len(empty_cells)-1)
+                self.grid.place_agent(agent, empty_cells[cell_i])
+                empty_cells.pop(cell_i)
+
             self.schedule.add(agent)
             self.clusters[i] = [agent]
-            empty_cells.pop(cell_i)
             
 
     def theta(self, dori):
