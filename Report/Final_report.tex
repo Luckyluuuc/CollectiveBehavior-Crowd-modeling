@@ -1,0 +1,256 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{titlesec} % for customizing title formatting
+\usepackage{graphicx} % for including graphics if needed
+\usepackage{abstract} % for a centered abstract
+\usepackage{setspace} % for line spacing adjustments
+\usepackage{fancyhdr} % for header/footer customization
+\usepackage{natbib}
+\usepackage{multicol}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{subfig}
+\usepackage[margin=1in]{geometry}
+
+% Set page margins
+\geometry{a4paper, margin=1in}
+
+% Section title format
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{1em}{}
+% Adjust spacing for \section
+\titlespacing*{\section}
+  {0pt} % Left margin
+  {1.0ex plus 0.5ex minus 0.2ex} % Space before
+  {0.8ex plus 0.3ex minus 0.2ex} % Space after
+
+% Subsection title format
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection.}{1em}{}
+% Adjust spacing for \subsection
+\titlespacing*{\subsection}
+  {0pt} % Left margin
+  {0.8ex plus 0.4ex minus 0.2ex} % Space before
+  {0.6ex plus 0.3ex minus 0.2ex} % Space after
+
+% Title, author, and date
+\title{\vspace{-0.5cm} \fontsize{19}{20}\selectfont \textbf{Crow Path Planning: Emotion Contagion Model Enhanced with a Fuzzy Logic-Based Approach}}
+
+\author{
+     Luc Brun, Cécile Luc, Alexis Mourier, Manon Tregon
+}
+\date{}
+
+\makeatletter
+\renewcommand{\maketitle}{
+    \begin{center}
+        {\Large \bfseries \@title \par}
+        \vskip 0.5cm % Adjust the spacing here
+        {\@author \par}
+    \end{center}
+}
+\makeatother
+
+% Customize header and footer
+
+\begin{document}
+
+% Title Page
+\maketitle
+\begin{center}
+    \rule{\textwidth}{0.5pt} \\[0.3cm]
+    \textbf{Abstract} \\[0.3cm]
+    \begin{minipage}{0.85\textwidth}
+        \small
+Numerous models simulate pedestrian crowd path planning, each with unique assumptions tailored to specific scenarios. We aim to combine two approaches for a more realistic model. First, we implement the emotional contagion model from \cite{emotionContagion}, incorporating emotional factors into decision-making. Then, using fuzzy logic from \cite{fuzzylogic}, we reformulate its rules to better reflect fuzzy boundaries of real-world spaces. We assume this integration will enhance behavioral predictions by uniting the strengths of both models.
+    \end{minipage}
+    \\[0.4cm]
+    \rule{\textwidth}{0.5pt}
+\end{center}
+
+\begin{spacing}{1.15} % Slightly increase line spacing for readability
+\begin{multicols}{2}
+
+
+% IMRAD Structure
+\section{Introduction}
+Crowd path planning is vital in multi-agent simulations, especially in dynamic environments. Traditional methods prioritize distance or density, neglecting emotional states and individual traits. While macroscopic models handle group movement and microscopic models simulate interactions, they often miss the nuances of realistic crowd behavior. This project aims to address these limitations.
+\section{Method}
+\subsection{Global Project}
+Our project combines the Emotion Contagion Model (\cite{emotionContagion}) and Fuzzy Logic Model (\cite{fuzzylogic}) to enhance multi-agent systems. Agents' \textit{preferred distance} and \textit{velocity} are influenced by OCEAN personality traits and refined with fuzzy rules, enabling realistic, continuous behaviors in scenarios like crowd navigation and evacuations.
+
+\subsection{Implementation}
+\subsubsection{Crowd Modelling}
+The project began by selecting a framework for modeling crowd dynamics.  
+The environment is represented as a grid, with each $35 \times 35$ cm cell corresponding to a location for one agent. This aligns with findings (\cite{youtube_crowd_density}) showing densities over $8 \, \text{persons}/\text{m}^2$ are critical, making movement nearly impossible.\\
+\\
+\textbf{Agent Movement:} To determine how an agent moves, the agent first identifies its neighbours, which are the cells it can access. This means the neighbouring cells must be within the agent's range, free of obstacles, and within the grid boundaries.
+For each accessible neighbour, the agent assigns a score to the cell based on several parameters, with lower scores being more favourable. The scoring is performed using the following formula, derived from the first paper:
+$$
+score\_cell = \left( \frac{\text{dist}_{exit}(e_{k-1})}{vel_0 \cdot e^{-\left( \text{den}(e_{k-1}) \cdot (P_v + 1) / (P_d + 1) \right)^2}} \right)
+$$
+This score function takes into account various parameters, including $P_v$ and $P_d$, which are derived from the agent's Ocean personality traits, the density around the cell, its distance to the exit, and a parameter $vel_0$, which represents the agent's optimal velocity.
+After scoring all accessible cells, the agent moves to the one with the lowest score.
+
+\subsubsection{Towards a more complex model}
+\textbf{Emotion contagion and external sources:}
+\cite{emotionContagion}'s emotion contagion algorithm, implemented in the \textit{update\_emotions} function, models how agents adjust emotions based on neighbours and external influences like fire. Each agent computes neighbour effects by measuring distance and adjusting preferences ($P_d$ for distance, $P_v$ for speed) based on emotional gaps, with closer neighbours having stronger impacts. External sources like fire induce panic or stress, modifying preferences. For instance, if the agent is close to its destination, it gives more importance to the distance to be covered. A dampening factor prevents rapid emotional shifts, preserving personality. Preferences are finally normalized for consistency. \\
+\\
+\textbf{Clustering:}
+Emotion contagion plays a key role in crowd simulations under complex environments. Research in sociology and behavioural psychology shows that real-world crowds consist of groups, defined as two or more agents with shared goals and collective behaviours. Recognizing such groups is crucial for modelling interactions. To address this, \cite{emotionContagion} proposes an algorithm that begins by identifying the agent with the highest density as the centre of the first cluster. It then evaluates each remaining agent in order of increasing density, checking whether it belongs to an existing cluster based on its distance to the nearest high-density agent. If no cluster matches, a new one is created.
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{cluster_illustration.png}
+\caption{\textit{Example of clustering.}}
+\end{figure}
+
+\noindent\textbf{Fuzzy Logic Implementation:}
+The final phase of the project involved integrating a fuzzy logic model (based on \cite{fuzzylogic}) to enhance multi-agent simulations by translating personality traits into behavioral preferences. The model uses fuzzy rules to map OCEAN personality scores to two key variables: \textit{preferred distance} ($P_d$) and \textit{preferred velocity} ($P_v$). OCEAN personality inputs are first categorized into low, medium, and high levels using trapezoidal membership functions. These inputs are then processed through predefined fuzzy rules that we developed by reformulating the crisp formulas from \cite{emotionContagion} and gathering insights about the OCEAN framework. To ensure comprehensive rule coverage and minimize errors, we leveraged LLMs to refine and expand the rule set.
+For instance, high conscientiousness and agreeableness correspond to an increase in $P_d$, while high neuroticism elevates $P_v$.
+The goal of this approach is to enable continuous and realistic variations in agent responses, effectively meeting the objectives of our simulation.
+%%%%%%% LES FORMULES DE LUC SUR FUZZIFICATION %%%%%%%%%%
+% \subsection{Example of rules fuzzification}
+
+% Let's take an example, this is the approach of \citep{emotionContagion} 
+% P_d = f(\psi_O) + f(\psi_E) + f(\psi_A)
+
+% f(\psi_O) = 
+% \begin{cases} 
+%    1 - \psi_O & \text{if } 0 \leq \psi_O < 0.5 \\
+%    0 & \text{otherwise}
+% \end{cases}
+    
+
+% f(\psi_E) = 
+% \begin{cases} 
+%    1 - \psi_E & \text{if } 0 \leq \psi_E < 0.5 \\
+%    0 & \text{otherwise}
+% \end{cases}
+
+% f(\psi_A) = 
+% \begin{cases} 
+%    2\psi_A - 1 & \text{if } \psi_A \geq 0.5 \\
+%    0 & \text{otherwise}
+% \end{cases}
+
+% \text{where } P_d \propto A, \, P_d \propto O^{-1}, \, P_d \propto E^{-1}
+
+
+
+%%%%%%% PARTIES A COMPLETER PLUS TARD %%%%%%%%%%
+\end{multicols}
+
+\section{Results}
+% Present key findings, including tables or figures as necessary. Provide a clear, logical structure to interpret the results in the context of your study.
+% Ligne 1 : Figures 1 et 2
+We recommend zooming the page (500~\%) to read the captions.
+\begin{figure}[h!]
+    \centering
+    % Première figure (groupe 1 de 2 images)
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \subfloat[Reference\label{fig:image1}]{
+            \includegraphics[width=0.45\textwidth]{Graphes/control_800_5.png}
+        }
+        \hfill
+        \subfloat[No emotion contagion\label{fig:image2}]{
+            \includegraphics[width=0.45\textwidth]{Graphes/no_emotion_800_5.png}
+        }
+        \caption{Average step comparison.}
+        \label{fig:comparison1}
+    \end{minipage}
+    \hfill
+    % Deuxième figure (groupe 2 de 2 images)
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \subfloat[Density Reference]{
+            \includegraphics[width=0.45\textwidth]{density_ref.png}
+        }
+        \hfill
+        \subfloat[CRISP Density]{
+            \includegraphics[width=0.45\textwidth]{density_crisp.png}
+        }
+        \caption{Comparison of density.}
+        \label{fig:comparison2}
+    \end{minipage}
+\end{figure}
+
+% Ligne 2 : Figures 3 et 4
+\begin{figure}[h!]
+    \centering
+    % Troisième figure (groupe 3 de 2 images)
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \subfloat[Distribution Step Extroverts]{
+            \includegraphics[width=0.45\textwidth]{Figure_1_E.png}
+        }
+        \hfill
+        \subfloat[Distribution Step Neurotics]{
+            \includegraphics[width=0.45\textwidth]{Figure_1_N.png}
+        }
+        \caption{Neurotics vs Extroverts : Steps to exit.}
+        \label{fig:comparison3}
+    \end{minipage}
+    \hfill
+    % Quatrième figure (groupe 4 de 2 images)
+        \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{correlation_ref.png}
+        \caption{Correlation Matrix}
+        \label{fig:image4}
+    \end{minipage}
+
+\end{figure}
+
+\begin{multicols}{2}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.40\textwidth]{Simulation.png}
+\caption{\textit{Example of simulation.}}
+\end{figure}
+\noindent We have implemented a multi-agent simulation using Mesa, representing pedestrians navigating a crowded environment with obstacles and exits (adjustable), and an initialization control. A configurable number of agents are initialized in the environment, each with a unique personality defined by the Big Five traits, which influence their movement behaviour. Each pedestrian agent is colour-coded according to their dominant personality trait: Openness (O), Conscientiousness (C), Extraversion (E), Agreeableness (A), and Neuroticism (N), cf Figure 6. Figure 5 of our Correlation Matrix validates the model by showing that Neurotics, as expected, require more steps to exit due to their stress, irritability, and lack of discipline, which align with their slower evacuation behavior.\\
+We ran various tests to evaluate our model and compare different situations, whose settings are mentioned below :\\
+\\
+\textbf{1. With or without the Emotion Contagion Model :}
+Grid :$100 \times 100$ units. 800 agents, 20 exits, 0 obstacle. cf Figure 2.\\
+\textbf{2. With Fuzzy or CRISP :}
+Grid : $100 \times100$ units. 800 agents, 20 exits, 4 obstacles. cf Figure 3.\\
+\textbf{3. Only Extrovert or Neurotic Agents:}
+Grid : $35 \times35$ units. 400 agents, 3 exits, 0 obstacle. This test aims to highlight behavioral differences in personality traits. Figure 4. First simulation with only Neurotic agents shows :\\
+- \textit{pv} decreased sharply as agents approached an exit but remained generally high unless very close to the exit.\\
+- \textit{pd} also remained high until close proximity to an exit, where it reached a maximum.
+The second simulation with only Extrovert agents shows :\\
+- \textit{pv} decreased sharply and as agents approached the exit, often dropping below 0.25 near the exit.\\
+- \textit{pd} remained high throughout the simulation and peaked when near an exit.\\
+
+\section{Discussion}
+% Discuss the implications of the results, limitations, and how the findings align with or diverge from prior research. Reflect on the broader impact and potential future directions.
+\textbf{Test 1 :} The results of our implementation highlight that emotion contagion enhances emotional harmony among agents as clusters merge during evacuation, leading to a smoother process and a reduction in the average number of emotion-driven steps to reach exits (illustrated in Fig 2). However, its influence on other metrics, such as maximum density evolution, remains negligible, preserving the system's core dynamics. Agents still reach the exits in approximately the same manner as they do without
+emotion contagion. We note that in the end we didn't implement the external sources (fires), as they didn't add anything.\\
+\noindent\textbf{Test 2 :} The fuzzy implementation does not significantly alter the overall behavior of the chosen metrics, suggesting robustness in the base system design. However we noted a notable distinction : the maximum density per square meter is slightly higher compared to the crisp implementation. This refinement achieves the  primary objective to introduce more nuanced and smooth transitions for the values of $P_v$ and $P_d$ without significantly altering the system's overall behavior.\\
+\noindent \textbf{Test 3 :} Both agent types prioritized \textit{pd} over \textit{pv} when close to an exit. However, neurotic agents balanced \textit{pv} and \textit{pd} when exits were not directly in front of them, whereas extrovert agents consistently favored \textit{pd}. Overall, extrovert agents exited faster (57 steps) compared to neurotic agents (64 steps). This aligns with expectations, as neurotic agents—characterized by anxiety and moodiness—are less disciplined, leading to slower evacuation.\\
+
+\noindent \textbf{To conclude, while the differences are subtle, the integration of fuzzy rules and emotion contagion functions effectively aligns with the system's intended behavior.}
+\end{multicols}
+\begin{spacing}{1.0} % Optional, adjust line spacing for the references
+{\scriptsize
+\bibliographystyle{plainnat} % Choose the bibliography style
+\bibliography{bib/bibliography} % Replace with your .bib file
+}
+\end{spacing}
+
+\renewcommand{\thefootnote}{} % Supprime la numérotation des notes de bas de page
+\footnotetext{%
+\tiny ` \\ \noindent% Supprime l'indentation et applique la taille la plus petite
+\textbf{Luc Brun}: Implementation of crowd modelling agents and collision system; Implementation of Fuzzy Logic, Writing of report \\
+\textbf{Manon Tregon}: Implementation of environment initialization control  ; Main writing and formatting of the report \\
+\textbf{Cécile Luc}: Implementation of agent emotions and visualization; Writing of report \\
+\textbf{Alexis Mourier}: Implementation of the model and clustering parts; Writing of report \\
+\textbf{All authors} have contributed in the decision-making process regarding the implementation of the model.
+}
+
+\end{spacing}
+\end{document}
