@@ -2,14 +2,11 @@ import random
 import numpy as np
 
 from mesa import Model
-from mesa.space import MultiGrid
 from mesa.time import RandomActivation
 import sys
 
 # for the fuzzy logic
 import numpy as np
-import skfuzzy as fuzz
-from skfuzzy import control as ctrl
 from fuzzy import FuzzyModel
 from grid_utils import MultiGridWithProperties
 
@@ -17,7 +14,6 @@ from grid_utils import MultiGridWithProperties
 from agents import PedestrianAgent
 from obstacle import Obstacle
 from trajectory import Trajectory
-from random import gauss
 from math import sqrt
 from exit import Exit
 from math import sqrt, pi, exp
@@ -246,9 +242,6 @@ class CrowdModel(Model):
                 self.dump_metrics()
                 print("Exiting the simulation...")
                 sys.exit(0)
-        
-        
-
 
 
     def add_trajectory(self, pos, agent_id): 
@@ -276,7 +269,6 @@ class CrowdModel(Model):
     def dump_metrics(self):
         """
         Dumps simulation metrics to a JSON file with structured information
-        
         """
 
         # Ensure the 'results' directory exists
@@ -319,11 +311,3 @@ class CrowdModel(Model):
             json.dump(metrics, f, indent=4)
         
         return filename
-
-
-
-# not used execpt for test i guess
-# if __name__ == "__main__":
-#     model = CrowdModel(0, 4, 4, [(2,2), (2,3)], (1,3))
-#     for _ in range(100):
-#         model.step()

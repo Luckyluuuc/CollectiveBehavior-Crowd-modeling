@@ -54,11 +54,6 @@ class PedestrianAgent(Agent):
         self.initial_pv = self.pv
 
 
-
-        
-
-
-
     def preferences_vel_dist(self):
         """Compute prefered velocity Pv and prefered distance Pd"""
         O, C, E, A, N = (self.personality['O'], self.personality['C'],
@@ -143,9 +138,9 @@ class PedestrianAgent(Agent):
                 if not grid.is_cell_empty(neighbor):
                     cell_agents = grid.get_cell_list_contents(neighbor)
 
-                #But if it is an Exit, we won't break so they can continue toward this direction and leave
+                # But if it is an Exit, we won't break so they can continue toward this direction and leave
                     if any(not isinstance(agent, Exit) for agent in cell_agents):
-                        break  #We see the neighbor is either an Obstacle or an Agent but not an Exit
+                        break  # We see the neighbor is either an Obstacle or an Agent but not an Exit
                 
                 valid_neighbors.append(neighbor)
 

@@ -1,4 +1,3 @@
-import argparse
 import random
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
@@ -50,13 +49,12 @@ def color_pv(agent):
 
 def agent_portrayal(agent):
     if isinstance(agent, PedestrianAgent):
-        color = ["red", "blue", "green", "yellow", "purple", "orange", "brown", "black"]
         return {
             "Shape": "circle",
             "Filled": "true",
             "r": 1.2,
-            # "Color": color_trait(agent),
-            "Color": color_pv(agent),
+            "Color": color_trait(agent),
+            # "Color": color_pv(agent),
             "Layer": 0,
         }
     
@@ -102,6 +100,7 @@ def random_personality():
             # Personality[trait] = max(0, min(1, random.gauss(mu, abs(sigma))))
         return personality
 
+
 def full_N():
     personality = {}
     for trait in ['O', 'C', 'E', 'A', 'N']:
@@ -112,6 +111,7 @@ def full_N():
             sigma = random.uniform(-0.1, 0.1)
             personality[trait] = random.gauss(mu, sigma**2)
     return personality
+
 
 def only_N():
     personality = {}
@@ -156,6 +156,7 @@ def run_visualisation(nb_agents, width, height, obstacles, exit_pos, personality
     server.launch()
 
 if __name__ == "__main__":
+    # Interactive menu
     agents = int(input("Enter the number of agents (default 400): ") or 400)
     width = int(input("Enter the width of the grid (default 100): ") or 100)
     height = int(input("Enter the height of the grid (default 100): ") or 100)
@@ -227,6 +228,7 @@ if __name__ == "__main__":
 
     if 0:
         # Generate 300 unique coordinates in the range [0, 100] for x and [50, 100] for y
+        # and then 100 unique coordinates in the range [0, 100] for x and [0, 50] for y
         coordinates = set()
 
         while len(coordinates) < 300:

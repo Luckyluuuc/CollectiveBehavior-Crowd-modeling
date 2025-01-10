@@ -2,7 +2,6 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List
 
 class Result_analysis:
     def __init__(self, json_path: str, figure_size: tuple = (12, 6)):
@@ -166,5 +165,6 @@ if __name__ == "__main__":
     analyzer.plot_all()
     
     # Or generate individual plots with custom titles
-    # analyzer.plot_density_over_time("Custom Density Plot Title")
-    # analyzer.plot_personality_distributions("Custom Personality Distribution Title")
+    if 0:
+        analyzer.plot_density_over_time("Custom Density Plot Title")
+        analyzer.plot_personality_distributions("Custom Personality Distribution Title")

@@ -13,9 +13,10 @@
 ## Starting Point
 
 These two papers serve as the foundation of our project and significantly inspire our approach:
-- **Paper 1** [Fuzzy Logic-Based Model That Incorporates Personality Traits for Heterogeneous Pedestrians] (https://www.mdpi.com/2073-8994/9/10/239)
-- **Paper 2** [Emotion Contagion Model for Dynamical Crowd Path Planning] (https://www.sciltp.com/journals/ijndi/2024/3/521/320) - 
+- **Paper 1** [Emotion Contagion Model for Dynamical Crowd Path Planning] (https://www.sciltp.com/journals/ijndi/2024/3/521/320) - 
+- **Paper 2** [Fuzzy Logic-Based Model That Incorporates Personality Traits for Heterogeneous Pedestrians] (https://www.mdpi.com/2073-8994/9/10/239)
 
+The main idea of our project is to merge these two  crowd behaviour models in order to build a new more realistic model. To do so, we did first implement the common basic structure of our crowd behaviour model. Then, we improved its functioning by adding the emotion contagion and  
 ## Rough Sketch
 
 We intend to use **Paper 1** to implement a pedestrian-walking model based on personality (using the famous OCEAN model) incorporating **fuzzy logic** to nuance subjects' personnalities. This approach is more realistic to the one presented in **Paper 2** where the OCEAN model is also taken into account but subjects belong to one of 5 well-separated categories. We'll also think up a way of solving a panic situation with this model. 
