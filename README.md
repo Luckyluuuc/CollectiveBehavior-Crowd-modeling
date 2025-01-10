@@ -16,41 +16,53 @@ These two papers serve as the foundation of our project and significantly inspir
 - **Paper 1** [Emotion Contagion Model for Dynamical Crowd Path Planning] (https://www.sciltp.com/journals/ijndi/2024/3/521/320) - 
 - **Paper 2** [Fuzzy Logic-Based Model That Incorporates Personality Traits for Heterogeneous Pedestrians] (https://www.mdpi.com/2073-8994/9/10/239)
 
-The main idea of our project is to merge these two  crowd behaviour models in order to build a new more realistic model. To do so, we did first implement the common basic structure of our crowd behaviour model. Then, we improved its functioning by adding the emotion contagion and  
-## Rough Sketch
 
-We intend to use **Paper 1** to implement a pedestrian-walking model based on personality (using the famous OCEAN model) incorporating **fuzzy logic** to nuance subjects' personnalities. This approach is more realistic to the one presented in **Paper 2** where the OCEAN model is also taken into account but subjects belong to one of 5 well-separated categories. We'll also think up a way of solving a panic situation with this model. 
+## Project Description
 
-Thus, we'll need to deepen our knowledge of the articles to fully understand the subject, and clearly establish our problem and model. We'll also start thinking about the structure of the code. This should be done for the **first report**.
+The primary objective of this project was to develop a more realistic crowd behavior model, building upon insights from two prior research studies.
 
-Later, we intend to implement **Paper 2**'s **emotion contagion model** in an attempt to be even more realistic and study the impact of other subjects' emotions as well as exterior factors on a given subject in a crowd. **Paper 1** appears limited in its implementation as it has only been tested on "normal" no-panic scenarios, and is not ideal for testing panic-scenarios. However, implementing panic-scenarios seems crucial to test safety infrastructures and limit life loss in certain scenarios. In case of a fire spreading in a closed room, for instance, this complex model incorporating subjects' personnalities and emotion contagion (spread of panic) could determine the optimal number of exit doors or exit routes. This will enable us to improve and complete our model. 
+To achieve this, we divided the project into three main phases:
 
-We will have to step back of the idea of our improved model and check our methodology in order to write the **2nd report**.
+1. **Baseline Model Development**: We started by designing a basic crowd-behavior model that allowed agents to exit a room using a scoring system to evaluate each accessible position in the environment. Additionally, agents accounted for local density to avoid being overwhelmed by the surrounding crowd.
 
-As said before, we finally intend to **pick a panic scenario to test our model** at different stages and determine the optimal safety measures and infrastructures. Modeling crowds in concert halls or stadiums could be an interesting application of pedestrian-walking and crowd simulation. It could enable us to test our model at different stages and has a real importance as death caused by panick crowd movement are common and not isolated incidents at festivals or huge concerts. This is the last stage, where we'll actually experiment with our model, by comparing the results of our two articles, and draw up a conclusion for the **final report**.
+2. **Incorporating Emotion Contagion**:
+Next, we enhanced the model by introducing emotion contagion, aiming to simulate the emotional exchanges that naturally occur within dense crowds. This step required the development of a personality system to define distinct behavior types among agents.
+
+3. **Incorporating Fuzzy Logic**:
+Finally, we made the model even more realistic by replacing rigid if-then-else rules with fuzzy logic rules. These flexible rules are particularly well-suited for abstract concepts like emotions and personalities, enabling a more nuanced representation of human behavior.
+
+## Goals and Achievements
+
+All the features outlined above were successfully implemented.
+
+Our goal was to create a crowd-behavior model that surpasses the realism of the two existing models that inspired our work. By "more realistic," we sought to better approximate real-world dynamics—an inherently challenging objective to quantify.
+
+To evaluate our progress, we generated graphs based on various metrics (e.g., maximum crowd density, average exit speed for agents with specific personality traits, etc.). While some metrics produced intriguing results, the observed behaviors of the crowd often remained quite similar, regardless of the implemented improvements.
 
 
-## Project roadmap
+## How to run the simulation ?
 
-### Before 07/11
-- Read and understand the scientific articles related to our project.
-- Think about the project's coding architecture.
+### Step 1: Install the Environment  
 
-### Before 15/11
-- Write and drop the first report.
+Before running any program, make sure to install the environment associated with the project. Use the following command:  
 
-### Before 06/12
-- Implement the first article model.
-- Make our methodology as clear as possible.
-- Write the second report.
 
-### Before 10/01
-- Implement the second article.
-- Compare our results with the papers' ones.
-- Start preparing the oral presentation.
-- Write the final report.
+`conda env create -f env.yml`
 
-### Before 17/01
-- Train the oral presentation.
-- Shot the presentation's video.
 
+First and formost you should install the environment associated with the project before running any program : 
+
+`conda env create -f env.yml`
+
+Running the simulation is simple. Follow these steps:
+
+### Step 2: Run the Simulation
+Execute the visualisation.py script:
+
+`python visualisation.py`
+
+As the script runs, you'll see several prompts in your terminal. These questions allow you to customize the simulation environment. Filling them out is optional—you can skip them if you prefer.
+
+After completing the prompts, a browser window will open automatically.
+
+Click "Start," and enjoy watching the simulation in action!
