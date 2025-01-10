@@ -4,6 +4,7 @@ import numpy as np
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
+import sys
 
 # for the fuzzy logic
 import numpy as np
@@ -21,19 +22,32 @@ from math import sqrt
 from exit import Exit
 from math import sqrt, pi, exp
 
+# for metrics storage 
+import json
+from datetime import datetime
+import os
 
 def euclidean_dist(pt1, pt2):
     """ Return euclidean distance between two points """
     return sqrt((pt1[0]- pt2[0])**2 + (pt1[1] - pt2[1])**2)
 
-
 class CrowdModel(Model):
-    def __init__(self, n_agents, width, height, obstacles, exit_pos):
+    def __init__(self, n_agents, width, height, obstacles, exit_pos, personality_function, agent_loc=False,
+                 use_fuzzy=True, enable_emotions=True, enable_relationships=True, enable_clustering=True):
         super().__init__(seed=42)
+
+         # Store configuration options
+        random.seed(42)
+        self.use_fuzzy = use_fuzzy
+        self.enable_emotions = enable_emotions
+        self.enable_relationships = enable_relationships
+        self.enable_clustering = enable_clustering
+        self.fuzzy_model = FuzzyModel() if self.use_fuzzy else None # Fuzzy model to compute Pd and Pv or not        
+        self.end = False
+
         self.grid = MultiGridWithProperties(width, height, torus=False)  # Torus=False to avoid cycling edges
         self.pd_sim = None
         self.pv_sim = None
-        self.fuzzy_model = FuzzyModel() # Fuzzy model to compute Pd and Pv
 
         for pos in exit_pos:
             self.grid.set_cell_property(pos, 'is_exit', True)
@@ -59,25 +73,40 @@ class CrowdModel(Model):
         self.exit = exit_pos  # Position(s) of the exit(s)
         self.max_density_per_episode = 0 
 
+        self.end = False
+        # reported metrics
+        self.nb_steps = 0
+        self.nb_agents = n_agents
+        self.nb_exits = len(exit_pos)
+        self.nb_obstacles = len(obstacles)
+        self.max_density_across_episodes = []
+        self.needed_steps_per_agents = {} # key: agent_id, value: nb_steps
+        self.agent_personalities = {} # key: agent_id, value: personality (five traits OCEAN)
+
+
         # Create agents only on empty cells
+        if agent_loc:
+            assert(n_agents <= len(agent_loc)), "The number of agent coordinates is not enought to cover every agents."
+
         empty_cells = [(x, y) for x in range(self.grid.width) for y in range(self.grid.height) if self.grid.is_cell_empty((x, y))]
         for i in range(n_agents):
             if len(empty_cells) == 0:
                 break
-            personality = {}
-            for trait in ['O', 'C', 'E', 'A', 'N']:
-                mu = self.random.uniform(0, 1)
-                sigma = self.random.uniform(-0.1, 0.1)
-                personality[trait] = gauss(mu, sigma**2)
-                # Personality[trait] = max(0, min(1, gauss(mu, abs(sigma))))
+            personality = personality_function()
             agent = PedestrianAgent(i, self, personality)
-            cell_i = random.randint(0, len(empty_cells)-1)
-            self.grid.place_agent(agent, empty_cells[cell_i])
-            #self.grid.place_agent(agent, (8, 2))
+            self.agent_personalities[i] = personality
+
+            # agent_loc is an array full of agent locations (couple of coordinates)
+            if agent_loc:
+                self.grid.place_agent(agent, agent_loc[i])
+            else:
+                cell_i = random.randint(0, len(empty_cells)-1)
+                self.grid.place_agent(agent, empty_cells[cell_i])
+                empty_cells.pop(cell_i)
+
             self.schedule.add(agent)
             self.clusters[i] = [agent]
-            empty_cells.pop(cell_i)
-
+            
 
     def theta(self, dori):
         """
@@ -136,7 +165,10 @@ class CrowdModel(Model):
 
         # Cluster initialization with the densest agent
         self.clusters = {}
-        highest_density_agent = sorted_agents_density[0] 
+        try:
+            highest_density_agent = sorted_agents_density[0]
+        except:
+            return
         self.clusters[highest_density_agent.unique_id] = [highest_density_agent]
         highest_density_agent.neigh = highest_density_agent.unique_id
 
@@ -180,21 +212,44 @@ class CrowdModel(Model):
 
 
     def step(self):
-        # Make the agent move
-        self.remove_all_trajectories()
-        self.max_density_per_episode = 0
-        self.schedule.step()
-        print("Max density per episode: ", self.max_density_per_episode)
-        
-        # Fill relationship matrix with distances from each relation
-        self.update_relationships()
+        if not self.end:
+            # Make the agent move
+            self.remove_all_trajectories()
+            self.max_density_per_episode = 0
+            self.schedule.step()
+            print("Max density per episode: ", self.max_density_per_episode)
 
-        # Update the clupdate_emotionsusters based on closest neighbor 
-        self.coll_clustering_algo()
+            # Apply optional mechanisms
+            if self.enable_relationships:
+                # Fill relationship matrix with distances from each relation
+                print("update relationship")
+                self.update_relationships()
+            
+            if self.enable_clustering:
+            # Update the clupdate_emotionsusters based on closest neighbor 
+                self.coll_clustering_algo()
+            
+            if self.enable_emotions:
+            # Apply the emotion contagion among the previously computed clusters
+                self.emotion_contagion()
 
-        # Apply the emotion contagion among the previously computed clusters
-        self.emotion_contagion()
+
+            # reported metrics
+            self.nb_steps += 1
+            self.max_density_across_episodes.append(self.max_density_per_episode)
+
+            if self.max_density_per_episode == 0: # Might be clever to do that instead of looking in scheduler 
+                self.end = True
+                print("End of the simulation")
+                print("Dumping metrics in JSON file")
+                print("\n \n \n \n \n \n \n \n \n \n")
+                self.dump_metrics()
+                print("Exiting the simulation...")
+                sys.exit(0)
         
+        
+
+
 
     def add_trajectory(self, pos, agent_id): 
         """
@@ -217,11 +272,58 @@ class CrowdModel(Model):
                         self.grid.remove_agent(agent)
         Trajectory.trajectory_counter = 0
 
+
+    def dump_metrics(self):
+        """
+        Dumps simulation metrics to a JSON file with structured information
         
+        """
+
+        # Ensure the 'results' directory exists
+        if not os.path.exists('results'):
+            os.makedirs('results')
+        
+        print("Please enter a name for the simulation :")
+        simulation_name = input()
+        metrics = {
+            "simulation_name": simulation_name,
+            "timestamp": datetime.now().isoformat(),
+            "configuration": {
+                "grid_dimensions": {
+                    "width": self.grid.width,
+                    "height": self.grid.height
+                },
+                "initial_setup": {
+                    "number_of_agents": self.nb_agents,
+                    "number_of_exits": self.nb_exits,
+                    "number_of_obstacles": self.nb_obstacles
+                },
+            },
+            "results": {
+                "total_steps": self.nb_steps,
+                "density_metrics": {
+                    "max_density_across_episodes": self.max_density_across_episodes,
+                },
+                "agent_infos": {
+                    "steps_needed_per_agent": self.needed_steps_per_agents,
+                    "personalities": self.agent_personalities
+                }
+            }
+        }
+    
+        # Create filename with timestamp to avoid overwrites
+        filename = f"results/simulation_metrics_{datetime.now().strftime('%Y%m%d_%H%M')}.json"
+        
+        # Write to file with pretty printing
+        with open(filename, 'w') as f:
+            json.dump(metrics, f, indent=4)
+        
+        return filename
 
 
 
-if __name__ == "__main__":
-    model = CrowdModel(0, 4, 4, [(2,2), (2,3)], (1,3))
-    for _ in range(100):
-        model.step()
+# not used execpt for test i guess
+# if __name__ == "__main__":
+#     model = CrowdModel(0, 4, 4, [(2,2), (2,3)], (1,3))
+#     for _ in range(100):
+#         model.step()

@@ -40,19 +40,24 @@ def prefV_E(value):
 
 
 class PedestrianAgent(Agent):
-    def __init__(self, unique_id, model, personality, initial_pd=1, initial_pv=1, vel0=2):
+    def __init__(self, unique_id, model, personality, vel0=2):
         super().__init__(unique_id, model)
         self.personality = personality  # dict whose keys ['O','C','E','A','N'] and values belong in [0;1]
-        self.initial_pd = initial_pd    
-        self.initial_pv = initial_pv
-
         self.vel = (0,0)   # values required to compute the relationship matrix (cf equation 5)
         
         self.p = 0      # collective density (cf equation 9) TODO: revoir la valeur par défaut
         self.neigh = unique_id
 
         self.vel0 = vel0  # should belong to {1, 2, 3}
-        self.fuzzy_preferences_vel_dist()
+        self.fuzzy_preferences_vel_dist() # If we want to activate/desactivate the fuzzy model change this ligne
+        self.initial_pd = self.pd    
+        self.initial_pv = self.pv
+
+
+
+        
+
+
 
     def preferences_vel_dist(self):
         """Compute prefered velocity Pv and prefered distance Pd"""
@@ -87,19 +92,20 @@ class PedestrianAgent(Agent):
                         min(1, max(0, self.personality['N'])))
 
         
+        if self.model.use_fuzzy and self.model.fuzzy_model:
+            try:
+                pd, pv = self.model.fuzzy_model.compute_parameters(O,C,E,A,N)
+            except Exception:
+                print("Error in fuzzy computation, using default parameters")
+                pd, pv = 1.5, 1.5
+        else:
+            pd, pv = 1.5, 1.5
+            
         
-        try: 
-            pd, pv = self.model.fuzzy_model.compute_parameters(O, C, E, A, N)
-
-        except:
-            print("Error in fuzzy computation, using default parameters")
-            pd = 1.5
-            pv = 1.5
 
         assert 0 <= pd <= 3, f"Invalid P_d value: {pd}"
         assert 0 <= pv <= 3, f"Invalid P_v value: {pv}"
-        self.pd = pd
-        self.pv = pv
+        self.pd, self.pv = pd, pv
 
 
     def get_cells_around(self):
@@ -248,8 +254,9 @@ class PedestrianAgent(Agent):
     
     def step(self):
         if self.pos in self.model.exit:
-            self.model.grid.remove_agent(self)  # L'agent "sort" de la grille
+            self.model.grid.remove_agent(self)  # The agent is removed from the grid
             self.model.schedule.remove(self)
+            self.model.needed_steps_per_agents[self.unique_id] = self.model.nb_steps # Store the number of steps needed for this agent
 
         else:
             min_score = float('inf')
